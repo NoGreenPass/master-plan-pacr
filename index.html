@@ -945,6 +945,7 @@ const storageBanner = () => (storageOk ? '' : '<div class="banner">La memoria lo
 
 // ===== Installazione come app =====
 let installEvt = null;
+let hasEnc = false;
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 function installHTML() {
   if (isStandalone() || !window.matchMedia('(pointer: coarse)').matches) return '';
@@ -976,7 +977,7 @@ function introHTML(M) {
     return `<div class="intro"><div>
       <h2>Benvenuto nel tuo master plan</h2>
       <p>Per ritrovare materie, coda e settimana tipo importa il file di backup. Se parti da zero, crea le materie nella scheda <b>Coda</b> e i tuoi orari nella scheda <b>Impegni</b>.</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><label class="btn primary">${ICON.upload} Importa da file<input type="file" accept=".json,application/json" data-change="import-file" hidden></label><button class="btn" data-act="backup-paste">Incolla un backup</button><button class="btn ghost" data-act="start-empty">Inizia da zero</button></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><label class="btn primary">${ICON.upload} Importa da file<input type="file" data-change="import-file" hidden></label>${hasEnc ? '<button class="btn" data-act="code-import">Carica con codice</button>' : ''}<button class="btn" data-act="backup-paste">Incolla un backup</button><button class="btn ghost" data-act="start-empty">Inizia da zero</button></div>
     </div></div>`;
   }
   const done = state.tasks.filter(t => t.status === 'done').length;
@@ -1344,7 +1345,7 @@ function renderDati() {
     <section class="panel"><h2>Backup</h2>
       <p>Tutto è salvato su questo dispositivo, dentro l'app: niente passa da un server. Se elimini l'app o cambi telefono non ritrovi il piano, quindi scarica un backup ogni tanto. ${last ? `Ultimo backup: ${fmtWhen(last)}.` : 'Non hai ancora fatto un backup.'}</p>
       <div class="row"><button class="btn primary" data-act="backup-save">${ICON.download} Scarica backup</button><button class="btn" data-act="backup-copy">${ICON.copy} Copia negli appunti</button></div>
-      <div class="row"><label class="btn">${ICON.upload} Importa da file<input type="file" accept=".json,application/json" data-change="import-file" hidden></label><button class="btn" data-act="backup-paste">Incolla un backup</button></div>
+      <div class="row"><label class="btn">${ICON.upload} Importa da file<input type="file" data-change="import-file" hidden></label>${hasEnc ? '<button class="btn" data-act="code-import">Carica con codice</button>' : ''}<button class="btn" data-act="backup-paste">Incolla un backup</button></div>
     </section>
     <section class="panel"><h2>Esporta per Excel</h2><p>File CSV con separatore punto e virgola: si apre direttamente in Excel.</p>
       <div class="row"><button class="btn" data-act="csv-plan">${ICON.download} Calendario dei blocchi di studio</button><button class="btn" data-act="csv-queue">${ICON.download} Coda delle attività</button></div></section>
@@ -1776,6 +1777,40 @@ function importText(txt) {
     body: `Il backup contiene ${ns.subjects.length} materie e ${ns.tasks.length} attività. I dati attuali vengono sostituiti; subito dopo puoi ancora annullare.`,
     fn: apply });
 }
+// Dati personali cifrati: dati.enc è leggibile solo con il codice (PBKDF2-SHA256 → AES-GCM).
+async function loadPrivateData(code) {
+  const norm = String(code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!norm) throw new Error('code');
+  let res;
+  try { res = await fetch('dati.enc', { cache: 'no-store' }); } catch (e) { throw new Error('offline'); }
+  if (!res.ok) throw new Error('missing');
+  const box = await res.json();
+  const b64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0));
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(norm), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(box.salt), iterations: box.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  let plain;
+  try { plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(box.iv) }, key, b64(box.data)); } catch (e) { throw new Error('code'); }
+  return new TextDecoder().decode(plain);
+}
+function openCodeImport(prefill = '') {
+  const d = modal({ title: 'Carica i tuoi dati', sub: 'Scrivi il codice che hai ricevuto: i dati arrivano cifrati e si aprono solo su questo dispositivo.',
+    html: `<label class="field"><span>Codice</span><input name="code" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(prefill)}" placeholder="es. abcd-efgh-jkmn"></label><p class="err" hidden></p>`,
+    foot: '<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-ok>Carica</button>' });
+  const inp = d.querySelector('input'), err = d.querySelector('.err'), ok = d.querySelector('[data-ok]');
+  const go = async () => {
+    if (!inp.value.trim()) { inp.focus(); return; }
+    ok.disabled = true; ok.textContent = 'Carico…'; err.hidden = true;
+    try { const txt = await loadPrivateData(inp.value); d.close(); importText(txt); }
+    catch (e) {
+      const m = e && e.message;
+      err.textContent = m === 'offline' ? 'Serve la connessione per scaricare i dati: riprova quando sei online.' : m === 'missing' ? 'Qui non ci sono dati da caricare con un codice.' : 'Codice non corretto: controlla di averlo scritto bene.';
+      err.hidden = false; ok.disabled = false; ok.textContent = 'Carica';
+    }
+  };
+  ok.addEventListener('click', go);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+  inp.focus();
+}
 function openPaste() {
   const d = modal({ title: 'Incolla un backup', html: '<textarea class="codebox" placeholder="Incolla qui il testo del backup (inizia con {&quot;v&quot;:1 …)"></textarea>',
     foot: '<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-ok>Continua</button>' });
@@ -1873,6 +1908,7 @@ const ACT = {
   undo: () => undo(),
   'intro-ok': () => { state.settings.introSeen = true; save(); render(); },
   'start-empty': () => { ui.tab = 'coda'; render(); window.scrollTo(0, 0); },
+  'code-import': () => openCodeImport(),
   install: async () => { const ev = installEvt; if (!ev) return; installEvt = null; try { await ev.prompt(); await ev.userChoice; } catch (e) { /* chiuso */ } render(); },
   'install-later': () => { try { localStorage.setItem('pacr-install-later', String(Date.now())); } catch (e) { /* ok */ } render(); },
   'week-prev': () => { ui.week = addDays(ui.week, -7); ui.day = addDays(ui.day, -7); render(); },
@@ -2001,6 +2037,12 @@ function init() {
   setH();
   if (window.ResizeObserver) new ResizeObserver(setH).observe(tb);
   setInterval(tick, 30000);
+  fetch('dati.enc', { method: 'HEAD', cache: 'no-store' }).then(r => { if (r.ok) { hasEnc = true; if (!document.querySelector('dialog[open]')) render(); } }).catch(() => {});
+  const hm = location.hash.match(/^#dati=([A-Za-z0-9-]{6,64})$/);
+  if (hm) {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+    loadPrivateData(hm[1]).then(txt => importText(txt), () => openCodeImport(hm[1]));
+  }
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (ui.tab === 'piano' && !document.querySelector('dialog[open]')) render(); });
   window.addEventListener('appinstalled', () => { installEvt = null; render(); toast('App installata: la trovi tra le app del telefono', false); });
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {

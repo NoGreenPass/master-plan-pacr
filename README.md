@@ -4,6 +4,7 @@ Pianificatore di studio installabile sul telefono: coda di attività per materia
 
 - **Installazione:** apri il sito dal telefono e aggiungilo alla schermata Home (Safari: Condividi → «Aggiungi alla schermata Home»; Chrome: ⋮ → «Installa app»).
 - **Dati:** restano solo sul dispositivo. Il repository contiene solo il codice dell'app, nessun dato personale: il piano si importa da un backup (Dati → Importa da file).
+- **dati.enc:** backup cifrato (PBKDF2-SHA256 600k, AES-GCM-256): si apre solo con il codice, che non è nel repository.
 - **Offline:** dopo la prima apertura funziona anche senza connessione.
 
 Font: Barlow e Barlow Condensed (SIL Open Font License), testo della licenza in `LICENSES.txt`.

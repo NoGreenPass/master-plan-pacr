@@ -1,0 +1,2015 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Master plan PACR</title>
+<meta name="description" content="Pianificatore di studio: coda di attività, settimana tipo e calendario.">
+<meta name="theme-color" content="#F1F4F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1322" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PACR">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face { font-family: "Barlow"; src: url(barlow-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url(barlow-latin-500-normal.woff2) format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url(barlow-latin-600-normal.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url(barlow-latin-700-normal.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url(barlow-condensed-latin-500-normal.woff2) format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url(barlow-condensed-latin-600-normal.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url(barlow-condensed-latin-700-normal.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+:root {
+  color-scheme: light;
+  --paper: #F1F4F9;
+  --surface: #FFFFFF;
+  --surface-2: #E9EEF5;
+  --ink: #13213C;
+  --ink-2: #46567A;
+  --ink-3: #75839E;
+  --line: #E0E6EF;
+  --line-2: #C3CEDF;
+  --accent: #2346D8;
+  --accent-ink: #FFFFFF;
+  --now: #E5322D;
+  --ok: #1C8A4C;
+  --warn: #A86400;
+  --danger: #C62F2F;
+  --shadow: 0 1px 2px rgba(19, 33, 60, .06), 0 10px 28px rgba(19, 33, 60, .10);
+  --font: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-c: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --topbar-h: 58px;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0C1322; --surface: #141D30; --surface-2: #1B263D;
+    --ink: #E6ECF7; --ink-2: #A9B6CD; --ink-3: #75849F;
+    --line: #1F2A41; --line-2: #31405E;
+    --accent: #86A2FF; --accent-ink: #0C1322;
+    --now: #FF5B53; --ok: #52C483; --warn: #F0A73A; --danger: #FF6B6B;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 32px rgba(0, 0, 0, .4);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0C1322; --surface: #141D30; --surface-2: #1B263D;
+  --ink: #E6ECF7; --ink-2: #A9B6CD; --ink-3: #75849F;
+  --line: #1F2A41; --line-2: #31405E;
+  --accent: #86A2FF; --accent-ink: #0C1322;
+  --now: #FF5B53; --ok: #52C483; --warn: #F0A73A; --danger: #FF6B6B;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 32px rgba(0, 0, 0, .4);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+html, body { background: var(--paper); }
+body {
+  margin: 0; color: var(--ink);
+  font: 400 15px/1.45 var(--font);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+button { font: inherit; color: inherit; }
+h1, h2, h3 { font-family: var(--font-c); line-height: 1.1; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.muted { color: var(--ink-3); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- barra superiore ---------- */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line-2);
+}
+.topbar-in { max-width: 1480px; margin: 0 auto; display: flex; align-items: center; gap: 18px; padding: 10px 20px; }
+.brand { font: 700 22px/1 var(--font-c); white-space: nowrap; display: flex; align-items: baseline; gap: 8px; }
+.brand .grid-mark { width: 18px; height: 18px; border: 1.5px solid var(--accent); border-radius: 3px; align-self: center;
+  background-image: linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px);
+  background-size: 6px 6px; background-position: -1px -1px; opacity: .85; }
+.tabs { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { appearance: none; border: 0; background: none; font: 600 15px var(--font); color: var(--ink-2);
+  padding: 8px 12px; border-radius: 6px; cursor: pointer; position: relative; white-space: nowrap; }
+.tab:hover { color: var(--ink); background: var(--surface-2); }
+.tab[aria-current="page"] { color: var(--ink); }
+.tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 1px; height: 2px; background: var(--accent); border-radius: 2px; }
+.count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 5px; border-radius: 9px;
+  font: 700 11px/1 var(--font); background: var(--now); color: #fff; vertical-align: 1px; }
+.undo-btn { flex: none; }
+main { max-width: 1480px; margin: 0 auto; padding: 18px 20px 96px; }
+
+/* ---------- bottoni e campi ---------- */
+.btn { appearance: none; display: inline-flex; align-items: center; gap: 6px; font: 600 14px/1.2 var(--font);
+  border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 8px 12px; cursor: pointer; text-align: left; }
+.btn:hover { border-color: var(--ink-3); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.danger { color: var(--danger); }
+.btn.sm { padding: 5px 9px; font-size: 13px; }
+.icon-btn { appearance: none; width: 32px; height: 32px; display: inline-grid; place-items: center; flex: none;
+  border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--ink-2); cursor: pointer; }
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn.ok:hover { color: var(--ok); }
+.icon-btn.no:hover { color: var(--danger); }
+.icon-btn:disabled { opacity: .3; cursor: default; background: none; }
+input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2);
+  border-radius: 6px; padding: 7px 9px; min-width: 0; width: 100%; }
+textarea { resize: vertical; min-height: 64px; }
+input[type="checkbox"], input[type="radio"] { width: auto; accent-color: var(--accent); }
+input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 0; border-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; }
+.seg button { appearance: none; border: 0; background: var(--surface); padding: 6px 10px; font: 600 13px var(--font); color: var(--ink-2); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line-2); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* ---------- vista Piano ---------- */
+.piano { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 22px; align-items: start; }
+.week-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin: 2px 0 14px; }
+.week-title { margin: 0; font: 700 38px/0.95 var(--font-c); letter-spacing: -.01em; }
+.week-title .yr { color: var(--ink-3); font-weight: 500; }
+.week-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.summary { margin: 8px 0 0; color: var(--ink-2); max-width: 72ch; font-size: 15px; }
+.summary b { color: var(--ink); font-weight: 600; }
+.summary .warn { color: var(--warn); font-weight: 600; }
+
+.intro { display: flex; gap: 20px; align-items: flex-start; justify-content: space-between; margin: 0 0 18px; padding: 16px 18px;
+  background: var(--surface); border: 1px solid var(--line-2); border-left: 4px solid var(--accent); border-radius: 8px; }
+.intro h2 { margin: 0 0 6px; font-size: 22px; }
+.intro > .btn, .week-nav .btn, .toolbar .btn { flex: none; white-space: nowrap; }
+.intro p { margin: 0 0 6px; color: var(--ink-2); max-width: 75ch; }
+.intro ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); max-width: 78ch; }
+.intro li { margin: 3px 0; }
+.intro li b { color: var(--ink); }
+
+.daystrip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 0 0 10px; }
+.daychip { appearance: none; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 6px 2px 5px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--ink-2); }
+.daychip b { font: 700 20px/1 var(--font-c); color: var(--ink); }
+.daychip small { font-size: 11px; }
+.daychip.today b { color: var(--accent); }
+.daychip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.daychip[aria-pressed="true"] b { color: var(--paper); }
+
+.cal { background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; }
+.cal-head, .cal-body { display: grid; grid-template-columns: 54px repeat(var(--cols), minmax(0, 1fr)); }
+.cal-head { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--topbar-h)); z-index: 6; background: var(--surface);
+  border-bottom: 1px solid var(--line-2); border-radius: 10px 10px 0 0; }
+.dh { padding: 8px 8px 7px; border-left: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
+.dh.corner { border-left: 0; }
+.dh .dn { font: 600 13px/1.1 var(--font); color: var(--ink-3); }
+.dh .dd { font: 700 26px/1 var(--font-c); margin-top: 2px; }
+.dh .dm { font: 500 12px/1.2 var(--font); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.dh.today { box-shadow: inset 0 -3px 0 var(--accent); }
+.dh.today .dd, .dh.today .dn { color: var(--accent); }
+.cal-body { position: relative; border-radius: 0 0 10px 10px; overflow: hidden; }
+.cal-times { position: relative; border-right: 1px solid var(--line-2); }
+.cal-times span { position: absolute; right: 7px; margin-top: 3px; font: 600 12px/1 var(--font-c); color: var(--ink-3); letter-spacing: .02em; }
+.cal-col { position: relative; border-left: 1px solid var(--line); cursor: cell;
+  background-image: linear-gradient(to bottom, var(--line-2) 1px, transparent 1px), linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 100% calc(60px * var(--ppm)), 100% calc(30px * var(--ppm)); }
+.cal-times + .cal-col { border-left: 0; }
+.closed { position: absolute; left: 0; right: 0; pointer-events: none;
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 9%, transparent) 0 1.5px, transparent 1.5px 8px), color-mix(in srgb, var(--paper) 70%, transparent); }
+.past { position: absolute; left: 0; right: 0; top: 0; pointer-events: none; background: color-mix(in srgb, var(--ink) 4.5%, transparent); }
+.nowline { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--now); z-index: 5; pointer-events: none; }
+.nowline::before { content: ""; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--now); }
+
+.blk, .itm { position: absolute; border-radius: 4px; overflow: hidden; padding: 2px 6px; font: 500 12.5px/14px var(--font-c); cursor: pointer; }
+.blk { z-index: 1; --c: #7C88A2;
+  background: color-mix(in srgb, var(--c) 24%, var(--surface));
+  color: color-mix(in srgb, var(--c) 40%, var(--ink));
+  border: 1px solid color-mix(in srgb, var(--c) 38%, transparent); }
+.blk .bl, .itm .l1, .itm .l2 { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk .bt { display: block; font-size: 11.5px; opacity: .8; }
+.blk.tp-libero { background: color-mix(in srgb, var(--c) 11%, var(--surface)); border-color: transparent; color: color-mix(in srgb, var(--c) 50%, var(--ink-3)); }
+.blk.tp-saltato { color: var(--danger); border-color: color-mix(in srgb, var(--c) 45%, transparent);
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c) 20%, var(--surface)) 0 5px, color-mix(in srgb, var(--c) 8%, var(--surface)) 5px 10px); }
+.blk.exc { border-style: dashed; }
+.blk:hover { filter: brightness(.97); }
+.itm { z-index: 2; color: var(--ink); padding-left: 7px;
+  background: color-mix(in srgb, var(--c) 18%, var(--surface));
+  border-left: 4px solid var(--c);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 22%, transparent); }
+.itm .s { color: color-mix(in srgb, var(--c) 72%, var(--ink)); font-weight: 700; }
+.itm .l1 { font-weight: 600; }
+.itm .l2 { color: var(--ink-2); }
+.itm:hover { background: color-mix(in srgb, var(--c) 26%, var(--surface)); }
+.itm .mk { position: absolute; right: 3px; top: 2px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%;
+  font: 700 11px/1 var(--font); font-style: normal; background: var(--surface); color: color-mix(in srgb, var(--c) 75%, var(--ink)); }
+.itm .mk + .l1, .itm.has-mk .l1 { padding-right: 16px; }
+.itm.pending { outline: 1.5px dashed color-mix(in srgb, var(--c) 80%, transparent); outline-offset: -1.5px; box-shadow: none; }
+.itm.done { background: color-mix(in srgb, var(--c) 8%, var(--surface)); border-left-color: color-mix(in srgb, var(--c) 50%, var(--surface)); color: var(--ink-2); box-shadow: none; }
+.itm.done .l2 { color: var(--ink-3); }
+.itm.done .mk { background: var(--ok); color: #fff; }
+.itm.skipped { border-left-color: var(--danger); color: var(--ink-3); box-shadow: none;
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--danger) 10%, var(--surface)) 0 5px, var(--surface) 5px 10px); }
+.itm.skipped .l1, .itm.skipped .l2 { text-decoration: line-through; color: var(--ink-3); }
+.itm.skipped .mk { background: var(--danger); color: #fff; }
+.itm.running { box-shadow: 0 0 0 2px var(--c); }
+.itm.running .mk { background: var(--c); }
+.itm.running .mk::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 2px 0; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; background: color-mix(in srgb, var(--c) 30%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); }
+.legend .tip { flex-basis: 100%; color: var(--ink-3); }
+
+/* ---------- colonna laterale ---------- */
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--topbar-h) + 16px);
+  max-height: calc(100dvh - var(--topbar-h) - 32px - env(safe-area-inset-top, 0px)); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; }
+.rail section { padding: 15px 16px 14px; }
+.rail section + section { border-top: 1px solid var(--line); }
+.rail h2 { margin: 0 0 8px; font-size: 20px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rail h2 small { font: 500 13px var(--font); color: var(--ink-3); }
+.alist { list-style: none; margin: 0; padding: 0; }
+.alist li { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 0; min-height: 34px; }
+.alist li + li { border-top: 1px dashed var(--line); }
+.alist .tm { font: 600 13px/1.25 var(--font-c); color: var(--ink-3); white-space: nowrap; }
+.alist li.past { opacity: .55; }
+.alist .lb { min-width: 0; font-size: 14px; line-height: 1.25; }
+.alist .lb b { font-weight: 600; }
+.alist .lb small { display: block; color: var(--ink-3); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alist .lb .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: var(--c); margin-right: 6px; vertical-align: 1px; }
+.alist li.fixed .lb { color: var(--ink-3); }
+.alist li.is-item { cursor: pointer; }
+.alist li.is-item:hover .lb b { text-decoration: underline; text-decoration-color: var(--line-2); }
+.alist .acts { display: flex; gap: 2px; }
+.alist .stx { font-size: 12px; font-weight: 600; }
+.stx.done { color: var(--ok); } .stx.skipped { color: var(--danger); } .stx.running { color: var(--accent); }
+.bulk { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.proj { list-style: none; margin: 0; padding: 0; }
+.proj li { padding: 7px 0 7px 12px; border-left: 3px solid var(--c); margin: 0 0 8px; }
+.proj li b { display: block; font-weight: 600; }
+.proj li span { color: var(--ink-2); font-size: 14px; }
+.proj li .late { color: var(--danger); font-weight: 600; }
+.proj li .okm { color: var(--ok); }
+.empty { color: var(--ink-3); margin: 0; font-size: 14px; }
+
+/* ---------- pagine interne ---------- */
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 20px; margin: 2px 0 16px; }
+.page-head h1 { margin: 0; font-size: 38px; letter-spacing: -.01em; }
+.page-head p { margin: 6px 0 0; color: var(--ink-2); max-width: 75ch; }
+.subjects { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 0 0 18px; }
+.subj { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: start; padding: 11px 12px 11px 14px; background: var(--surface);
+  border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 6px; }
+.subj h3 { margin: 0; font-size: 19px; }
+.subj p { margin: 0; grid-column: 1 / -1; color: var(--ink-2); font-size: 14px; }
+.subj p .late { color: var(--danger); font-weight: 600; }
+.subj.add { border: 1px dashed var(--line-2); border-top-width: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--ink-2); cursor: pointer; background: transparent; min-height: 84px; font-weight: 600; }
+.subj.add:hover { color: var(--ink); border-color: var(--ink-3); }
+
+.quick { display: grid; grid-template-columns: 190px 170px minmax(0, 1fr) 110px auto; gap: 8px; align-items: center; padding: 12px;
+  background: var(--surface); border: 1px solid var(--line-2); border-radius: 8px; margin: 0 0 12px; }
+.quick .dur { display: flex; align-items: center; gap: 6px; }
+.quick .dur span { color: var(--ink-3); font-size: 14px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.toolbar .spacer { flex: 1; }
+.toolbar select { width: auto; }
+.queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.q-row { display: grid; grid-template-columns: 26px 26px 120px minmax(0, 1fr) 92px 200px 118px auto; gap: 10px; align-items: center;
+  padding: 7px 8px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 6px; position: relative; }
+.q-row.dragging { z-index: 10; box-shadow: var(--shadow); border-color: var(--line-2); }
+.queue.is-dragging .q-row:not(.dragging) { transition: transform .15s ease; }
+.q-grip { appearance: none; border: 0; background: none; width: 26px; height: 30px; display: grid; place-items: center; color: var(--ink-3); cursor: grab; touch-action: none; border-radius: 4px; }
+.q-grip:hover { color: var(--ink); background: var(--surface-2); }
+.q-n { font: 700 16px var(--font-c); color: var(--ink-3); text-align: right; }
+.q-subj { font: 700 14px/1.2 var(--font-c); color: color-mix(in srgb, var(--c) 72%, var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-main { min-width: 0; line-height: 1.3; }
+.q-main b { font-weight: 600; }
+.q-main .ct { color: var(--ink-2); }
+.q-main .tag { display: inline-block; font: 600 12px/1 var(--font); font-style: normal; padding: 3px 6px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2); margin-left: 6px; }
+.q-main .note { display: block; color: var(--ink-3); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-main .sub-inline { display: none; font: 700 13px var(--font-c); color: color-mix(in srgb, var(--c) 72%, var(--ink)); margin-right: 6px; }
+.q-dur { font-weight: 600; white-space: nowrap; }
+.q-dur small { display: block; font-weight: 500; color: var(--ink-3); font-size: 12px; }
+.q-dur .bar { display: block; height: 4px; border-radius: 2px; background: var(--surface-2); margin-top: 4px; overflow: hidden; }
+.q-dur .bar i { display: block; height: 100%; background: var(--c); }
+.q-when { font-size: 14px; color: var(--ink-2); line-height: 1.25; }
+.pill { display: inline-block; font: 600 12.5px/1 var(--font); padding: 5px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; justify-self: start; }
+.pill.running { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); }
+.pill.pending { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); color: var(--warn); }
+.pill.left { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); color: var(--danger); }
+.pill.done { background: color-mix(in srgb, var(--ok) 14%, var(--surface)); color: var(--ok); }
+.q-act { display: flex; gap: 0; }
+.history { margin-top: 26px; }
+.history h2 { font-size: 24px; margin: 0 0 8px; }
+.hlist { list-style: none; margin: 0; padding: 0; }
+.hlist li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); }
+.hlist .ic { color: var(--ok); display: grid; place-items: center; }
+.hlist .ic.cx { color: var(--ink-3); }
+.hlist .tx { min-width: 0; }
+.hlist .tx b { font-weight: 600; }
+.hlist .tx small { color: var(--ink-3); margin-left: 6px; }
+.empty-q { padding: 26px; text-align: center; border: 1px dashed var(--line-2); border-radius: 8px; color: var(--ink-2); }
+
+.tpl-total { font-size: 16px; color: var(--ink-2); margin: 0; }
+.tpl-total b { color: var(--ink); font: 700 22px var(--font-c); }
+.tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.dcard { background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 14px 14px 12px; }
+.dcard.flash { animation: flash 1.2s ease; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.dcard header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.dcard h2 { margin: 0; font-size: 24px; }
+.dcard .avail { color: var(--ink-2); font-size: 14px; }
+.dcard .avail b { color: var(--ink); }
+.dwin { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 10px; color: var(--ink-2); font-size: 14px; }
+.tmi { width: 74px; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.dbar { position: relative; height: 22px; border-radius: 4px; background: color-mix(in srgb, #E2706A 34%, var(--surface)); overflow: hidden; border: 1px solid var(--line); }
+.dbar > i { position: absolute; top: 0; bottom: 0; }
+.dbar .off { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 12%, transparent) 0 1.5px, var(--surface-2) 1.5px 6px); }
+.dbar .bk { background: color-mix(in srgb, var(--c) 45%, var(--surface)); border-left: 1px solid var(--surface); }
+.dbar .bk.tp-libero { background: color-mix(in srgb, var(--c) 18%, var(--surface)); }
+.dticks { position: relative; height: 16px; font: 600 11px var(--font-c); color: var(--ink-3); margin-bottom: 6px; }
+.dticks span { position: absolute; transform: translateX(-50%); top: 2px; }
+.dticks span:first-child { transform: none; }
+.dticks span:last-child { transform: translateX(-100%); }
+.blist { list-style: none; margin: 0; padding: 0; }
+.blist li { display: grid; grid-template-columns: 74px 74px 140px minmax(0, 1fr) 32px; gap: 6px; align-items: center; padding: 4px 0; }
+.blist li.overlap input[data-f="bstart"], .blist li.overlap input[data-f="bend"] { border-color: var(--warn); }
+.blist .sw { width: 10px; }
+.dfoot { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.warnline { color: var(--warn); font-size: 13px; margin: 4px 0 0; }
+.exc-sec { margin-top: 30px; }
+.exc-sec h2 { font-size: 26px; margin: 0 0 4px; }
+.exc-sec > p { margin: 0 0 12px; color: var(--ink-2); max-width: 75ch; }
+.elist { list-style: none; margin: 0 0 10px; padding: 0; }
+.elist li { display: grid; grid-template-columns: 190px 150px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.elist .ty { display: inline-flex; align-items: center; gap: 6px; }
+.elist .ty i { width: 10px; height: 10px; border-radius: 2px; background: var(--c); }
+.elist .past-row { opacity: .6; }
+
+.panel { background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 16px 18px; margin: 0 0 14px; max-width: 860px; }
+.panel h2 { margin: 0 0 6px; font-size: 24px; }
+.panel p { margin: 0 0 10px; color: var(--ink-2); max-width: 75ch; }
+.panel .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.panel .row + .row { margin-top: 10px; }
+.panel label.inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.panel label.inline select { width: auto; }
+.panel.warnp { border-color: color-mix(in srgb, var(--danger) 40%, var(--line-2)); }
+.banner { margin: 0 0 14px; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--warn) 14%, var(--surface)); color: var(--ink); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+
+/* ---------- finestre ---------- */
+dialog.modal { border: 0; padding: 0; border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow);
+  width: min(580px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); }
+dialog.modal.wide { width: min(760px, calc(100vw - 32px)); }
+dialog.modal::backdrop { background: rgba(8, 15, 30, .5); }
+dialog.modal[open] { animation: pop .16s ease-out; }
+@keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.985); } }
+.m-wrap { display: flex; flex-direction: column; max-height: calc(100dvh - 48px); }
+.m-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 18px 20px 4px; }
+.m-head h2 { margin: 0; font-size: 25px; }
+.m-head .kick { display: block; font: 700 14px var(--font-c); color: color-mix(in srgb, var(--c, var(--ink-3)) 75%, var(--ink)); margin-bottom: 2px; }
+.m-sub { margin: 5px 0 0; color: var(--ink-2); font-size: 14px; }
+.m-body { padding: 10px 20px 16px; overflow: auto; }
+.m-foot { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid var(--line); }
+.m-foot .left { margin-right: auto; }
+.actions { display: flex; flex-direction: column; gap: 6px; }
+.actions .btn { width: 100%; padding: 10px 12px; font-size: 15px; justify-content: flex-start; }
+.actions .btn .hint { display: block; font-weight: 400; color: var(--ink-3); font-size: 13px; margin-top: 2px; }
+.actions .btn.primary .hint { color: color-mix(in srgb, var(--accent-ink) 80%, transparent); }
+.actions .btn > svg { flex: none; }
+.actions hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field > span { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.field small { color: var(--ink-3); font-size: 12.5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { appearance: none; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); font: 600 13px var(--font); cursor: pointer; color: var(--ink-2); }
+.chip:hover { color: var(--ink); border-color: var(--ink-3); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatches label { position: relative; cursor: pointer; }
+.swatches input { position: absolute; opacity: 0; }
+.swatches span { display: block; width: 28px; height: 28px; border-radius: 6px; background: var(--c); box-shadow: inset 0 0 0 2px var(--surface); border: 2px solid transparent; }
+.swatches input:checked + span { border-color: var(--ink); }
+.swatches input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.phases { display: flex; flex-direction: column; gap: 6px; }
+.phase { display: grid; grid-template-columns: 22px minmax(0, 1fr) 90px; gap: 8px; align-items: center; }
+.preview { margin-top: 12px; padding: 10px 12px; background: var(--surface-2); border-radius: 6px; font-size: 14px; color: var(--ink-2); }
+.preview ol { margin: 6px 0 0; padding-left: 22px; max-height: 150px; overflow: auto; }
+.daychecks { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.daychecks label { display: inline-flex; align-items: center; gap: 6px; }
+.err { color: var(--danger); font-size: 13.5px; margin: 8px 0 0; }
+.codebox { width: 100%; min-height: 180px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+/* ---------- installazione ---------- */
+.install { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px 12px; align-items: center; margin: 0 0 14px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--line-2); border-left: 4px solid var(--accent); border-radius: 8px; }
+.install img { width: 44px; height: 44px; border-radius: 10px; }
+.install b { display: block; font: 700 19px/1.15 var(--font-c); }
+.install span { display: block; color: var(--ink-2); font-size: 14px; }
+.install-acts { grid-column: 1 / -1; display: flex; gap: 8px; }
+.install-acts .btn.primary { flex: 1; justify-content: center; }
+
+/* ---------- avvisi ---------- */
+.toast-wrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; justify-content: center; pointer-events: none;
+  padding: 0 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 9px 10px 9px 16px; border-radius: 10px;
+  background: var(--ink); color: var(--paper); box-shadow: var(--shadow); font-weight: 500; transform: translateY(140%); opacity: 0; transition: transform .2s ease, opacity .2s ease; max-width: 560px; }
+.toast.show { transform: none; opacity: 1; }
+.toast .btn { background: transparent; color: var(--paper); border-color: color-mix(in srgb, var(--paper) 35%, transparent); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .piano { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; max-height: none; }
+  .q-row { grid-template-columns: 26px 26px 100px minmax(0, 1fr) 84px 170px auto; }
+  .q-row .pill { display: none; }
+}
+@media (max-width: 760px) {
+  body { font-size: 15px; }
+  .topbar-in { padding: 8px 12px; gap: 10px; }
+  .brand { font-size: 19px; }
+  .brand .brand-text { display: none; }
+  .tabs { margin-left: 0; flex: 1; justify-content: space-between; }
+  .tab { padding: 8px 8px; font-size: 15px; }
+  .tab[aria-current="page"]::after { left: 9px; right: 9px; }
+  main { padding: 12px 12px 96px; }
+  .week-title { font-size: 30px; }
+  .week-head > div:first-child { min-width: 0; }
+  .seg button { padding: 6px 8px; }
+  .cal-head, .cal-body { grid-template-columns: 46px repeat(var(--cols), minmax(0, 1fr)); }
+  .cal-head { display: none; }
+  .cal-body { border-radius: 10px; }
+  .blk, .itm { font-size: 13.5px; line-height: 15px; }
+  .intro { flex-direction: column; gap: 10px; }
+  .page-head h1 { font-size: 32px; }
+  .quick { grid-template-columns: 1fr 1fr; }
+  .quick input[name="content"] { grid-column: 1 / -1; }
+  .quick .btn { justify-content: center; }
+  .q-row { grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-areas: "g m d" "g w a"; row-gap: 2px; padding: 7px 6px 7px 4px; }
+  .q-grip { grid-area: g; }
+  .q-n, .q-subj { display: none; }
+  .q-main { grid-area: m; }
+  .q-main .sub-inline { display: inline; }
+  .q-dur { grid-area: d; text-align: right; }
+  .q-when { grid-area: w; font-size: 13px; }
+  .q-act { grid-area: a; }
+  .blist li { grid-template-columns: 74px 74px minmax(0, 1fr) 32px; grid-template-areas: "s e t x" "l l l l"; }
+  .blist li [data-f="bstart"] { grid-area: s; } .blist li [data-f="bend"] { grid-area: e; }
+  .blist li [data-f="btype"] { grid-area: t; } .blist li [data-f="blabel"] { grid-area: l; }
+  .tpl-total { width: 100%; }
+  .blist li .icon-btn { grid-area: x; }
+  .blist li + li { border-top: 1px dashed var(--line); padding-top: 8px; }
+  .elist li { grid-template-columns: 1fr auto; }
+  .elist li .ty, .elist li .ds { grid-column: 1; }
+  .form { grid-template-columns: 1fr; }
+  dialog.modal, dialog.modal.wide { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 16px 16px 0 0; max-height: 92dvh; }
+  .m-wrap { max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+  <div class="brand"><span class="grid-mark" aria-hidden="true"></span><span class="brand-text">Master plan PACR</span></div>
+  <nav class="tabs" id="tabs" aria-label="Sezioni"></nav>
+  <button type="button" class="icon-btn undo-btn" id="undo" data-act="undo" aria-label="Annulla l'ultima modifica" title="Annulla l'ultima modifica (Ctrl+Z)" disabled></button>
+</div></header>
+<main>
+  <section id="view-piano" aria-label="Piano"></section>
+  <section id="view-coda" aria-label="Coda" hidden></section>
+  <section id="view-impegni" aria-label="Impegni" hidden></section>
+  <section id="view-dati" aria-label="Dati" hidden></section>
+</main>
+<datalist id="acts"></datalist>
+<div class="toast-wrap"><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
+<script>
+(function () {
+'use strict';
+// ===================== MOTORE DI PIANIFICAZIONE =====================
+// Modello:
+//  - state.frozen  = passato congelato: blocchi già trascorsi (planned/done/skipped)
+//  - state.cursor  = istante fino al quale il passato è congelato
+//  - il piano futuro si calcola SEMPRE da cursor in avanti, riempiendo il tempo
+//    libero della settimana tipo (meno eccezioni) con la coda, in ordine.
+// Garanzia: se non cambia nulla, congelare in un qualsiasi istante non sposta il piano.
+
+const MIN = 60000;
+const MAX_DAYS = 400;
+const pad = n => String(n).padStart(2, '0');
+const dstr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const tsOf = (s, min) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 0, min).getTime(); };
+const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return dstr(d); };
+const weekday = s => (parseD(s).getDay() + 6) % 7; // 0 = lunedì
+const mondayOf = s => addDays(s, -weekday(s));
+const minOfDay = ts => { const d = new Date(ts); return d.getHours() * 60 + d.getMinutes(); };
+const minWithin = (ts, s) => (ts >= tsOf(addDays(s, 1), 0) ? 1440 : ts <= tsOf(s, 0) ? 0 : minOfDay(ts));
+const floorMin = ts => Math.floor(ts / MIN) * MIN;
+const fmtHM = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const parseHM = s => { const [h, m] = String(s).split(':').map(Number); return h * 60 + m; };
+
+let _uidN = 0;
+const uid = p => `${p}_${Date.now().toString(36)}${(_uidN++).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+function dayLayout(st, ds) {
+  const tpl = st.template[weekday(ds)] || { start: 480, end: 1320, blocks: [] };
+  const cancelled = new Set();
+  for (const c of st.cancels) if (c.date === ds) cancelled.add(c.blockId);
+  const blocks = [];
+  for (const b of tpl.blocks) if (!cancelled.has(b.id)) blocks.push({ ...b, src: 'tpl', date: ds });
+  for (const e of st.exceptions) if (e.date === ds) blocks.push({ ...e, src: 'exc' });
+  blocks.sort((a, b) => a.start - b.start || a.end - b.end);
+  return { date: ds, start: tpl.start, end: tpl.end, blocks };
+}
+
+function freeOf(L) {
+  let segs = [[L.start, L.end]];
+  for (const b of L.blocks) {
+    const out = [];
+    for (const [a, c] of segs) {
+      if (b.end <= a || b.start >= c) { out.push([a, c]); continue; }
+      if (b.start > a) out.push([a, b.start]);
+      if (b.end < c) out.push([b.end, c]);
+    }
+    segs = out;
+  }
+  return segs.filter(([a, c]) => c > a);
+}
+
+function usedMinutes(st) {
+  const m = new Map();
+  for (const f of st.frozen) {
+    if (f.st === 'skipped') continue;
+    m.set(f.taskId, (m.get(f.taskId) || 0) + (f.end - f.start) / MIN);
+  }
+  return m;
+}
+
+function remainingOf(t, used) {
+  if (t.status !== 'todo') return 0;
+  return Math.max(0, Math.round((+t.duration || 0) - (used.get(t.id) || 0)));
+}
+
+function contTask(st) {
+  if (st.cursor == null) return null;
+  for (const f of st.frozen) if (f.end === st.cursor && f.st === 'planned') return f.taskId;
+  return null;
+}
+
+// Riempimento greedy in ordine di coda, rispettando "non prima di" e il blocco minimo.
+function computePlan(st, fromTs, opts = {}) {
+  const stopAt = opts.stopAt ?? Infinity;
+  const cont = opts.cont ?? null;
+  const minChunk = Math.max(5, +st.settings.minChunk || 30);
+  const used = usedMinutes(st);
+  const queue = [];
+  for (const t of st.tasks) {
+    const r = remainingOf(t, used);
+    if (r > 0) queue.push({ id: t.id, rem: r, rel: t.notBefore ? tsOf(t.notBefore, 0) : -Infinity });
+  }
+  const segs = [];
+  if (!queue.length) return { segs, left: [], end: null };
+  let ds = dstr(new Date(fromTs));
+  let first = true;
+  let pending = queue.length;
+  outer:
+  for (let n = 0; n < MAX_DAYS; n++, ds = addDays(ds, 1)) {
+    if (tsOf(ds, 0) >= stopAt) break;
+    for (const [fa, fb] of freeOf(dayLayout(st, ds))) {
+      const ib = tsOf(ds, fb);
+      if (ib <= fromTs) continue;
+      let t = Math.max(tsOf(ds, fa), fromTs);
+      while (t < ib) {
+        if (t >= stopAt) break outer;
+        let idx = -1, nextRel = Infinity;
+        for (let i = 0; i < queue.length; i++) {
+          const q = queue[i];
+          if (q.rem <= 0) continue;
+          if (q.rel <= t) { idx = i; break; }
+          if (q.rel < nextRel) nextRel = q.rel;
+        }
+        if (idx < 0) { if (nextRel < ib) { t = nextRel; continue; } break; }
+        const q = queue[idx];
+        const limit = Math.min(ib, nextRel);
+        const avail = Math.floor((limit - t) / MIN);
+        const isCont = first && t === fromTs && q.id === cont;
+        first = false;
+        if (!isCont && avail < minChunk && q.rem > avail) {
+          if (nextRel < ib) { t = nextRel; continue; }
+          break;
+        }
+        if (avail <= 0) break;
+        const alloc = Math.min(q.rem, avail);
+        const e = t + alloc * MIN;
+        segs.push({ taskId: q.id, start: t, end: e });
+        q.rem -= alloc;
+        if (q.rem <= 0) pending--;
+        t = e;
+      }
+      if (pending <= 0) break outer;
+    }
+  }
+  const left = queue.filter(q => q.rem > 0).map(q => ({ id: q.id, rem: q.rem }));
+  return { segs, left, end: segs.length ? segs[segs.length - 1].end : null };
+}
+
+function snapOf(st, taskId) {
+  const t = st.tasks.find(x => x.id === taskId);
+  return t ? { subjectId: t.subjectId, activity: t.activity, content: t.content } : null;
+}
+
+// Congela il piano fino a "now": ciò che è passato non si sposta più.
+function freeze(st, now) {
+  now = floorMin(now);
+  if (st.cursor == null) { st.cursor = now; return true; }
+  if (now <= st.cursor) return false;
+  const { segs } = computePlan(st, st.cursor, { stopAt: now, cont: contTask(st) });
+  for (const s of segs) {
+    if (s.start >= now) break;
+    const end = Math.min(s.end, now);
+    const prev = st.frozen.find(f => f.taskId === s.taskId && f.end === s.start && f.st === 'planned');
+    if (prev) prev.end = end;
+    else st.frozen.push({ id: uid('f'), taskId: s.taskId, start: s.start, end, st: 'planned', snap: snapOf(st, s.taskId) });
+  }
+  st.cursor = now;
+  return true;
+}
+
+// Un'attività i cui blocchi passati sono tutti confermati e senza residuo si chiude da sola.
+function normalize(st) {
+  const used = new Map(), allDone = new Map(), lastEnd = new Map();
+  for (const f of st.frozen) {
+    if (f.st === 'skipped') continue;
+    used.set(f.taskId, (used.get(f.taskId) || 0) + (f.end - f.start) / MIN);
+    if (f.st !== 'done') allDone.set(f.taskId, false);
+    else if (!allDone.has(f.taskId)) allDone.set(f.taskId, true);
+    lastEnd.set(f.taskId, Math.max(lastEnd.get(f.taskId) || 0, f.end));
+  }
+  const closed = [];
+  for (const t of st.tasks) {
+    if (t.status !== 'todo') continue;
+    const rem = (+t.duration || 0) - (used.get(t.id) || 0);
+    if (rem <= 0 && allDone.get(t.id) === true) {
+      t.status = 'done';
+      t.completedAt = lastEnd.get(t.id);
+      closed.push(t.id);
+    }
+  }
+  return closed;
+}
+
+
+// ===================== STATO INIZIALE =====================
+// Nel codice pubblico non ci sono dati personali: materie, coda e settimana tipo
+// si importano da un backup (Dati → Importa da file) oppure si creano nell'app.
+function seedState() {
+  const day = () => ({ start: 480, end: 1320, blocks: [] });
+  return {
+    v: 1,
+    settings: { minChunk: 30, theme: 'auto', zoom: 1, introSeen: false },
+    subjects: [], tasks: [], template: [day(), day(), day(), day(), day(), day(), day()],
+    exceptions: [], cancels: [], frozen: [], cursor: null,
+  };
+}
+
+// ===================== APP =====================
+const LS_KEY = 'pacr-masterplan:v1';
+const DAY_NAMES = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'];
+const DAY_TITLES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+const DAY_SHORT = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
+const MONTHS = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+const MONTHS_S = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+const TYPES = {
+  routine: { short: 'Routine', label: 'Routine (sveglia, preparazione)', color: '#E3B21F' },
+  pasto: { short: 'Pasto', label: 'Pasto', color: '#E3B21F' },
+  lezione: { short: 'Lezione', label: 'Lezione', color: '#4F8FD6' },
+  sport: { short: 'Sport', label: 'Sport, allenamento', color: '#B8860B' },
+  spostamento: { short: 'Spostamento', label: 'Spostamento, tempo morto', color: '#98A1AE' },
+  lavoro: { short: 'Lavoro', label: 'Lavoro', color: '#3BA864' },
+  casa: { short: 'Casa', label: 'Casa, famiglia, spesa', color: '#A06A35' },
+  studiofisso: { short: 'Studio fisso', label: 'Studio a orario fisso (es. Leitner)', color: '#E2706A' },
+  altro: { short: 'Altro', label: 'Altro impegno', color: '#7C88A2' },
+  libero: { short: 'Libero', label: 'Tempo libero (protetto)', color: '#36AEE6' },
+  saltato: { short: 'Non disponibile', label: 'Non disponibile', color: '#D9534F' },
+};
+const SUBJECT_COLORS = ['#E4572E', '#0E9F8E', '#7A5CFA', '#D98E04', '#C2417F', '#2F9E44', '#1C7ED6', '#5F6B85'];
+const ACTIVITIES = ['Lettura', 'Schema', 'Lettura e Schema', 'Ripresa appunti', 'Testing', 'Ripasso', 'Ripasso Leitner', 'Esercizi', 'Altro'];
+
+// ---------- utilità ----------
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const todayStr = () => dstr(new Date());
+const isNarrow = () => window.matchMedia('(max-width: 760px)').matches;
+const fmtTime = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtEnd = (ts, ds) => (minWithin(ts, ds) >= 1440 ? '24:00' : fmtTime(ts));
+const fmtRange = (a, b) => `${fmtTime(a)}–${fmtEnd(b, dstr(new Date(a)))}`;
+const fmtHMend = m => (m >= 1440 ? '24:00' : fmtHM(m));
+// Orari scritti a mano: accetta 13:30, 13.30, 13,30, 1330, 930, 9, 24:00
+function parseTimeStr(v) {
+  v = String(v || '').trim().replace(/[.,h]/gi, ':');
+  let h, mi;
+  let m = v.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
+  if (m) { h = +m[1]; mi = m[2] === undefined ? 0 : +m[2]; }
+  else if ((m = v.match(/^(\d{3,4})$/))) { const x = m[1].padStart(4, '0'); h = +x.slice(0, 2); mi = +x.slice(2); }
+  else return NaN;
+  if (mi > 59 || h > 24 || (h === 24 && mi > 0)) return NaN;
+  return h * 60 + mi;
+}
+const timeField = (m, attrs) => `<input class="tmi" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="5" value="${fmtHMend(m)}" ${attrs}>`;
+function fmtDur(min) { min = Math.round(min); if (min < 60) return `${min} min`; const h = Math.floor(min / 60), m = min % 60; return m ? `${h} h ${m} min` : `${h} h`; }
+const fmtHours = min => { min = Math.round(min); return min >= 60 && min % 6 === 0 ? `${(min / 60).toLocaleString('it-IT', { maximumFractionDigits: 1 })} h` : fmtDur(min); };
+const fmtHoursCompact = min => `${(Math.round(min / 6) / 10).toLocaleString('it-IT')}h`;
+function fmtDayShort(ds) { const d = parseD(ds); return `${DAY_SHORT[weekday(ds)]} ${d.getDate()} ${MONTHS_S[d.getMonth()]}`; }
+function fmtDayLong(ds) { const d = parseD(ds); return `${DAY_NAMES[weekday(ds)]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+function relDay(ds, long = false) {
+  const t = todayStr();
+  if (ds === t) return 'oggi';
+  if (ds === addDays(t, 1)) return 'domani';
+  if (ds === addDays(t, -1)) return 'ieri';
+  return long ? fmtDayLong(ds) : fmtDayShort(ds);
+}
+const fmtWhen = (ts, long = false) => `${relDay(dstr(new Date(ts)), long)} alle ${fmtTime(ts)}`;
+const ceilQuarter = ts => Math.ceil(ts / (15 * MIN)) * 15 * MIN;
+const daysBetween = (a, b) => Math.round((parseD(b) - parseD(a)) / 86400000);
+const itDate = ds => { const [y, m, d] = ds.split('-'); return `${d}/${m}/${y}`; };
+
+const svg = (d, s = 16, sw = 1.9) => `<svg viewBox="0 0 16 16" width="${s}" height="${s}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON = {
+  check: svg('<path d="M3 8.5l3.2 3.1L13 4.6"/>'),
+  x: svg('<path d="M4 4l8 8M12 4l-8 8"/>'),
+  plus: svg('<path d="M8 3v10M3 8h10"/>'),
+  left: svg('<path d="M10 3.5L5.5 8l4.5 4.5"/>'),
+  right: svg('<path d="M6 3.5L10.5 8 6 12.5"/>'),
+  undo: svg('<path d="M5.5 3.5L2.5 6.5l3 3"/><path d="M2.5 6.5h7a3.5 3.5 0 010 7H7"/>', 18),
+  edit: svg('<path d="M10.5 2.8l2.7 2.7L6 12.7l-3.3.6.6-3.3z"/>'),
+  trash: svg('<path d="M2.8 4.3h10.4M6.3 4.3V2.8h3.4v1.5M4.3 4.3l.6 8.9h6.2l.6-8.9"/>'),
+  up: svg('<path d="M8 13V3.5M4.2 7.3L8 3.5l3.8 3.8"/>'),
+  down: svg('<path d="M8 3v9.5M4.2 8.7L8 12.5l3.8-3.8"/>'),
+  grip: '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor"><circle cx="6" cy="4" r="1.2"/><circle cx="10" cy="4" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="6" cy="12" r="1.2"/><circle cx="10" cy="12" r="1.2"/></svg>',
+  skip: svg('<path d="M2.8 11.5c1.6-4.2 7.6-5 10-1"/><path d="M13.2 6.6v3.9H9.3"/>'),
+  clock: svg('<circle cx="8" cy="8" r="5.6"/><path d="M8 4.9v3.3l2.1 1.3"/>'),
+  copy: svg('<rect x="5.5" y="5.5" width="7.5" height="7.5" rx="1.3"/><path d="M10.5 5.5V3.8a.8.8 0 00-.8-.8H3.8a.8.8 0 00-.8.8v5.9c0 .4.4.8.8.8h1.7"/>'),
+  top: svg('<path d="M3.5 2.8h9M8 13.2V5.8M4.6 9.1L8 5.8l3.4 3.3"/>'),
+  bottom: svg('<path d="M3.5 13.2h9M8 2.8v7.4M4.6 6.9L8 10.2l3.4-3.3"/>'),
+  play: svg('<path d="M5 3.5v9l7-4.5z"/>'),
+  download: svg('<path d="M8 2.8v7.4M4.8 7.2L8 10.4l3.2-3.2M3 13.2h10"/>'),
+  upload: svg('<path d="M8 10.4V3M4.8 6.2L8 3l3.2 3.2M3 13.2h10"/>'),
+};
+const MK = { check: svg('<path d="M3 8.5l3.2 3.1L13 4.6"/>', 11, 2.6), x: svg('<path d="M4 4l8 8M12 4l-8 8"/>', 10, 2.6) };
+
+// ---------- stato e salvataggio ----------
+let state = null;
+let storageOk = true;
+const undoStack = [];
+let dragging = false;
+const ui = { tab: 'piano', week: mondayOf(todayStr()), day: todayStr(), filter: 'all', showHistory: false, flashDay: null, quick: { subjectId: null, activity: 'Lettura', duration: 60 }, focusQuick: false };
+
+const clampMin = (v, d) => { v = Math.round(+v); return Number.isFinite(v) ? Math.min(1440, Math.max(0, v)) : d; };
+const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+function cleanBlock(b) {
+  return { id: String(b.id || uid('b')), start: clampMin(b.start, 0), end: clampMin(b.end, 0), type: TYPES[b.type] ? b.type : 'altro', label: String(b.label ?? '') };
+}
+function sanitize(o) {
+  if (!o || typeof o !== 'object') throw new Error('formato sconosciuto');
+  if (!Array.isArray(o.tasks) || !Array.isArray(o.template) || o.template.length !== 7) throw new Error('mancano la coda o la settimana tipo');
+  const base = seedState();
+  return {
+    v: 1,
+    settings: { ...base.settings, ...(o.settings && typeof o.settings === 'object' ? o.settings : {}) },
+    subjects: (Array.isArray(o.subjects) ? o.subjects : []).filter(s => s && s.id && s.name).map(s => ({
+      id: String(s.id), name: String(s.name), short: String(s.short || s.name).slice(0, 12),
+      color: /^#[0-9a-f]{6}$/i.test(s.color) ? s.color : '#5F6B85', exam: isDate(s.exam) ? s.exam : null })),
+    tasks: o.tasks.filter(t => t && t.id).map(t => ({
+      id: String(t.id), subjectId: String(t.subjectId || ''), activity: String(t.activity || ''), content: String(t.content || ''),
+      duration: Math.max(0, Math.round(+t.duration || 0)), status: ['todo', 'done', 'cancelled'].includes(t.status) ? t.status : 'todo',
+      notBefore: isDate(t.notBefore) ? t.notBefore : null, note: String(t.note || ''), completedAt: t.completedAt ? +t.completedAt : null })),
+    template: o.template.map(d => ({ start: clampMin(d && d.start, 480), end: clampMin(d && d.end, 1440),
+      blocks: (d && Array.isArray(d.blocks) ? d.blocks : []).filter(b => b).map(cleanBlock) })),
+    exceptions: (Array.isArray(o.exceptions) ? o.exceptions : []).filter(e => e && isDate(e.date)).map(e => ({ ...cleanBlock(e), date: e.date })),
+    cancels: (Array.isArray(o.cancels) ? o.cancels : []).filter(c => c && isDate(c.date) && c.blockId).map(c => ({ date: c.date, blockId: String(c.blockId) })),
+    frozen: (Array.isArray(o.frozen) ? o.frozen : []).filter(f => f && f.taskId && +f.end > +f.start).map(f => ({
+      id: String(f.id || uid('f')), taskId: String(f.taskId), start: +f.start, end: +f.end,
+      st: ['planned', 'done', 'skipped'].includes(f.st) ? f.st : 'planned', snap: f.snap || null })),
+    cursor: o.cursor != null && Number.isFinite(+o.cursor) ? +o.cursor : null,
+  };
+}
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(LS_KEY); } catch (e) { storageOk = false; }
+  if (raw) { try { state = sanitize(JSON.parse(raw)); } catch (e) { state = null; } }
+  const now = floorMin(Date.now());
+  if (!state) { state = seedState(); state.cursor = ceilQuarter(now); }
+  if (state.cursor != null && state.cursor > now + 20 * MIN) { // orologio tornato indietro
+    state.frozen = state.frozen.filter(f => f.start < now);
+    for (const f of state.frozen) if (f.end > now) f.end = now;
+    state.cursor = now;
+  }
+  freeze(state, Date.now());
+  normalize(state);
+  save();
+}
+function save() {
+  if (!storageOk) return;
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  catch (e) { storageOk = false; }
+}
+function mutate(fn, msg, { rerender = true } = {}) {
+  freeze(state, Date.now());
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > 60) undoStack.shift();
+  fn(state);
+  const closed = normalize(state);
+  save();
+  if (rerender) render(); else renderTopbar(buildModel());
+  if (!msg && closed.length) msg = closed.length === 1 ? 'Attività completata' : `${closed.length} attività completate`;
+  if (msg) toast(msg, true);
+}
+function undo() {
+  const s = undoStack.pop();
+  if (!s) return;
+  state = JSON.parse(s);
+  freeze(state, Date.now());
+  save();
+  render();
+  toast('Modifica annullata', false);
+}
+
+// ---------- modello per la vista ----------
+function buildModel() {
+  const nowF = floorMin(Date.now());
+  const cursor = state.cursor ?? nowF;
+  const plan = computePlan(state, cursor, { cont: contTask(state) });
+  const taskById = new Map(state.tasks.map(t => [t.id, t]));
+  const subjById = new Map(state.subjects.map(s => [s.id, s]));
+  const pieces = [];
+  for (const f of state.frozen) pieces.push({ taskId: f.taskId, start: f.start, end: f.end, st: f.st, snap: f.snap });
+  for (const s of plan.segs) pieces.push({ taskId: s.taskId, start: s.start, end: s.end, st: s.end <= nowF ? 'planned' : 'future' });
+  pieces.sort((a, b) => a.start - b.start || a.end - b.end);
+  const items = [];
+  const lastByTask = new Map();
+  for (const p of pieces) {
+    const last = lastByTask.get(p.taskId);
+    if (last && last.end === p.start && (last.raw === p.st || (last.raw === 'planned' && p.st === 'future'))) {
+      last.end = p.end; last.raw = p.st; last.parts.push(p);
+    } else {
+      const it = { taskId: p.taskId, start: p.start, end: p.end, raw: p.st, parts: [p], snap: p.snap || null };
+      items.push(it); lastByTask.set(p.taskId, it);
+    }
+  }
+  for (const it of items) {
+    const fut = it.parts.some(p => p.st === 'future');
+    it.status = fut ? (it.start < nowF ? 'running' : 'future') : ({ planned: 'pending', done: 'done', skipped: 'skipped' })[it.parts[0].st];
+    const t = taskById.get(it.taskId) || null;
+    it.task = t;
+    it.subject = subjById.get(t ? t.subjectId : it.snap && it.snap.subjectId) || null;
+    it.activity = t ? t.activity : (it.snap ? it.snap.activity : 'Attività eliminata');
+    it.content = t ? t.content : (it.snap ? it.snap.content : '');
+    it.date = dstr(new Date(it.start));
+  }
+  const used = usedMinutes(state);
+  const tinfo = new Map();
+  for (const t of state.tasks) tinfo.set(t.id, { used: used.get(t.id) || 0, rem: remainingOf(t, used), items: [], left: 0 });
+  for (const it of items) { const ti = tinfo.get(it.taskId); if (ti) ti.items.push(it); }
+  for (const l of plan.left) { const ti = tinfo.get(l.id); if (ti) ti.left = l.rem; }
+  const subj = new Map(state.subjects.map(s => [s.id, { rem: 0, end: null, left: 0, count: 0 }]));
+  let remTot = 0, todoActive = 0;
+  for (const t of state.tasks) {
+    if (t.status !== 'todo') continue;
+    const ti = tinfo.get(t.id);
+    remTot += ti.rem; if (ti.rem > 0) todoActive++;
+    const si = subj.get(t.subjectId);
+    if (si) { si.rem += ti.rem; si.left += ti.left; si.count++; }
+  }
+  for (const s of plan.segs) {
+    const t = taskById.get(s.taskId), si = t && subj.get(t.subjectId);
+    if (si && (!si.end || s.end > si.end)) si.end = s.end;
+  }
+  return { nowF, plan, items, tinfo, subj, taskById, subjById, remTot, todoActive };
+}
+const studyMin = (M, ds) => M.items.filter(i => i.date === ds && i.status !== 'skipped').reduce((a, i) => a + (i.end - i.start) / MIN, 0);
+const freeMinutes = ds => freeOf(dayLayout(state, ds)).reduce((a, [x, y]) => a + y - x, 0);
+function findItem(M, taskId, start) {
+  start = +start;
+  return M.items.find(i => i.taskId === taskId && i.start <= start && start < i.end) || null;
+}
+function taskState(t, M) {
+  if (t.status === 'done') return { key: 'done', label: 'Completata' };
+  if (t.status === 'cancelled') return { key: 'cancelled', label: 'Annullata' };
+  const ti = M.tinfo.get(t.id);
+  if (ti.items.some(i => i.status === 'running')) return { key: 'running', label: 'In corso' };
+  if (ti.left > 0) return { key: 'left', label: 'Senza spazio' };
+  if (ti.items.some(i => i.status === 'future')) return { key: 'future', label: 'In programma' };
+  if (ti.items.some(i => i.status === 'pending')) return { key: 'pending', label: 'Da confermare' };
+  return { key: 'empty', label: '—' };
+}
+function itemTitle(it) {
+  const st = { future: 'in programma', running: 'in corso', pending: 'da confermare', done: 'svolto', skipped: 'non svolto' }[it.status];
+  return `${it.subject ? it.subject.name : ''} · ${it.activity}${it.content ? ' — ' + it.content : ''}\n${cap(fmtDayLong(it.date))}, ${fmtRange(it.start, it.end)} (${st})`;
+}
+
+// ---------- render ----------
+function applyTheme() {
+  const t = state.settings.theme;
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  else delete document.documentElement.dataset.theme;
+}
+function render() {
+  applyTheme();
+  const M = buildModel();
+  renderTopbar(M);
+  for (const id of ['piano', 'coda', 'impegni', 'dati']) $(`#view-${id}`).hidden = id !== ui.tab;
+  if (ui.tab === 'piano') renderPiano(M);
+  else if (ui.tab === 'coda') renderCoda(M);
+  else if (ui.tab === 'impegni') renderImpegni();
+  else renderDati();
+}
+function renderTopbar(M) {
+  const pend = M.items.filter(i => i.status === 'pending').length;
+  $('#tabs').innerHTML = [['piano', 'Piano'], ['coda', 'Coda'], ['impegni', 'Impegni'], ['dati', 'Dati']].map(([k, l]) =>
+    `<button class="tab" data-act="tab" data-tab="${k}" ${ui.tab === k ? 'aria-current="page"' : ''}>${l}${k === 'piano' && pend ? `<span class="count" title="Blocchi passati da confermare">${pend}</span>` : ''}</button>`).join('');
+  $('#undo').disabled = !undoStack.length;
+}
+const storageBanner = () => (storageOk ? '' : '<div class="banner">La memoria locale non è disponibile in questo browser: le modifiche restano solo finché la pagina è aperta. Usa Dati → Scarica backup per non perderle.</div>');
+
+// ===== Installazione come app =====
+let installEvt = null;
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function installHTML() {
+  if (isStandalone() || !window.matchMedia('(pointer: coarse)').matches) return '';
+  let later = 0;
+  try { later = +localStorage.getItem('pacr-install-later') || 0; } catch (e) { /* ok */ }
+  if (Date.now() - later < 3 * 864e5) return '';
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const android = /Android/i.test(navigator.userAgent);
+  const hint = installEvt ? 'Si apre dall\'icona, a schermo intero, e funziona anche offline.'
+    : ios ? 'In Safari tocca Condividi (il quadrato con la freccia), poi «Aggiungi alla schermata Home». Dopo, apri l\'app dall\'icona e importa lì il backup.'
+    : android ? 'In Chrome tocca il menu ⋮ in alto a destra, poi «Installa app» o «Aggiungi a schermata Home».'
+    : 'Dal menu del browser scegli «Installa app» o «Aggiungi a schermata Home».';
+  return `<div class="install"><img src="icon-192.png" alt="" width="44" height="44"><div><b>Installa l'app sul telefono</b><span>${hint}</span></div><div class="install-acts">${installEvt ? '<button class="btn primary" data-act="install">Installa</button>' : ''}<button class="btn ghost" data-act="install-later">Non ora</button></div></div>`;
+}
+
+// ===== Piano =====
+function renderPiano(M) {
+  const narrow = isNarrow();
+  if (mondayOf(ui.day) !== ui.week) ui.day = addDays(ui.week, weekday(ui.day));
+  const days = narrow ? [ui.day] : Array.from({ length: 7 }, (_, i) => addDays(ui.week, i));
+  $('#view-piano').innerHTML = `${installHTML()}${storageBanner()}${state.settings.introSeen ? '' : introHTML(M)}
+    <div class="piano">
+      <div class="piano-main">${weekHeadHTML(M)}${narrow ? dayStripHTML(M) : ''}${calendarHTML(M, days)}${legendHTML()}</div>
+      <aside class="rail" aria-label="Riepilogo">${todayHTML(M)}${pendingHTML(M)}${projectionHTML(M)}</aside>
+    </div>`;
+}
+function introHTML(M) {
+  if (!state.subjects.length && !state.tasks.length) {
+    return `<div class="intro"><div>
+      <h2>Benvenuto nel tuo master plan</h2>
+      <p>Per ritrovare materie, coda e settimana tipo importa il file di backup. Se parti da zero, crea le materie nella scheda <b>Coda</b> e i tuoi orari nella scheda <b>Impegni</b>.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><label class="btn primary">${ICON.upload} Importa da file<input type="file" accept=".json,application/json" data-change="import-file" hidden></label><button class="btn" data-act="backup-paste">Incolla un backup</button><button class="btn ghost" data-act="start-empty">Inizia da zero</button></div>
+    </div></div>`;
+  }
+  const done = state.tasks.filter(t => t.status === 'done').length;
+  return `<div class="intro"><div>
+    <h2>Come funziona il tuo master plan</h2>
+    <p>${state.subjects.length} materie e ${state.tasks.length} attività (${done} già fatte, ${fmtHours(M.remTot)} ancora in coda).</p>
+    <ul>
+      <li><b>La coda si pianifica da adesso in avanti</b>, nell'ordine della lista, negli spazi liberi della settimana tipo.</li>
+      <li><b>Il passato non si sposta più.</b> A fine giornata segna i blocchi trascorsi come svolti o non svolti.</li>
+      <li><b>Solo «non svolto» e «salta» spingono il resto in avanti.</b> Se finisci prima, le attività successive anticipano, ma mai in un orario già passato.</li>
+    </ul></div>
+    <button class="btn" data-act="intro-ok">Ho capito</button></div>`;
+}
+function weekHeadHTML(M) {
+  const ws = ui.week, we = addDays(ws, 6), a = parseD(ws), b = parseD(we);
+  const title = a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} ${MONTHS[b.getMonth()]}` : `${a.getDate()} ${MONTHS_S[a.getMonth()]} – ${b.getDate()} ${MONTHS_S[b.getMonth()]}`;
+  const wsTs = tsOf(ws, 0), weTs = tsOf(addDays(ws, 7), 0);
+  let planned = 0, done = 0, avail = 0;
+  for (const it of M.items) {
+    if (it.start < wsTs || it.start >= weTs || it.status === 'skipped') continue;
+    const m = (it.end - it.start) / MIN; planned += m; if (it.status === 'done') done += m;
+  }
+  for (let i = 0; i < 7; i++) avail += freeMinutes(addDays(ws, i));
+  let s1;
+  const nLeft = M.plan.left.length;
+  if (!M.remTot) s1 = 'La coda è vuota: aggiungi le prossime attività nella scheda <b>Coda</b>.';
+  else if (!M.plan.end) s1 = `<span class="warn">In coda ci sono ${fmtHours(M.remTot)}, ma la settimana tipo non ha spazi liberi per lo studio.</span>`;
+  else s1 = `In coda <b>${fmtHours(M.remTot)}</b> di studio in ${M.todoActive} ${M.todoActive === 1 ? 'attività' : 'attività'}: finisci <b>${fmtWhen(M.plan.end, true)}</b>.${nLeft ? ` <span class="warn">${nLeft} ${nLeft === 1 ? 'attività non trova' : 'attività non trovano'} spazio.</span>` : ''}`;
+  const thisWeek = ws === mondayOf(todayStr());
+  const s2 = `${thisWeek ? 'Questa settimana' : 'In questa settimana'}: ${fmtHours(planned)} di studio su ${fmtHours(avail)} disponibili${done ? `, ${fmtHours(done)} già confermate` : ''}.`;
+  const z = state.settings.zoom || 1;
+  const atToday = thisWeek && (!isNarrow() || ui.day === todayStr());
+  return `<div class="week-head">
+    <div><h1 class="week-title">${title} <span class="yr">${b.getFullYear()}</span></h1><p class="summary">${s1}<br>${s2}</p></div>
+    <div class="week-nav">
+      <button class="icon-btn" data-act="week-prev" aria-label="Settimana precedente" title="Settimana precedente">${ICON.left}</button>
+      <button class="btn sm" data-act="today" ${atToday ? 'disabled' : ''}>Oggi</button>
+      <button class="icon-btn" data-act="week-next" aria-label="Settimana successiva" title="Settimana successiva">${ICON.right}</button>
+      <div class="seg" role="group" aria-label="Altezza del calendario">${[[0.8, 'Compatto'], [1, 'Normale'], [1.4, 'Ampio']].map(([v, l]) => `<button data-act="zoom" data-z="${v}" aria-pressed="${z === v}">${l}</button>`).join('')}</div>
+    </div></div>`;
+}
+function dayStripHTML(M) {
+  const td = todayStr();
+  return `<div class="daystrip" role="group" aria-label="Giorno">${Array.from({ length: 7 }, (_, i) => {
+    const ds = addDays(ui.week, i), m = studyMin(M, ds);
+    return `<button class="daychip ${ds === td ? 'today' : ''}" data-act="pick-day" data-date="${ds}" aria-pressed="${ds === ui.day}"><small>${DAY_SHORT[i]}</small><b>${parseD(ds).getDate()}</b><small>${m ? fmtHoursCompact(m) : '–'}</small></button>`;
+  }).join('')}</div>`;
+}
+function layoutLanes(rects) {
+  rects.sort((a, b) => a.s - b.s || b.e - a.e);
+  let cluster = [], end = -1;
+  const flush = () => {
+    const lanes = [];
+    for (const r of cluster) {
+      let li = lanes.findIndex(e => e <= r.s);
+      if (li < 0) { li = lanes.length; lanes.push(r.e); } else lanes[li] = r.e;
+      r.lane = li;
+    }
+    for (const r of cluster) r.lanes = lanes.length;
+    cluster = [];
+  };
+  for (const r of rects) {
+    if (r.s >= end) { flush(); end = r.e; } else end = Math.max(end, r.e);
+    cluster.push(r);
+  }
+  flush();
+}
+function calendarHTML(M, days) {
+  const ppm = (isNarrow() ? 1.25 : 1.1) * (state.settings.zoom || 1);
+  const layouts = days.map(ds => dayLayout(state, ds));
+  const dayItems = days.map(ds => M.items.filter(it => it.date === ds));
+  let vs = 1440, ve = 0;
+  layouts.forEach((L, i) => {
+    vs = Math.min(vs, L.start); ve = Math.max(ve, L.end);
+    for (const b of L.blocks) { vs = Math.min(vs, b.start); ve = Math.max(ve, b.end); }
+    for (const it of dayItems[i]) { vs = Math.min(vs, minOfDay(it.start)); ve = Math.max(ve, minWithin(it.end, it.date)); }
+  });
+  if (vs >= ve) { vs = 480; ve = 1320; }
+  vs = Math.max(0, Math.floor(vs / 60) * 60); ve = Math.min(1440, Math.ceil(ve / 60) * 60);
+  const td = todayStr();
+  const head = days.map((ds, i) => {
+    const m = dayItems[i].filter(x => x.status !== 'skipped').reduce((a, x) => a + (x.end - x.start) / MIN, 0);
+    return `<div class="dh ${ds === td ? 'today' : ''}"><span class="dn">${DAY_TITLES[weekday(ds)]}</span><span class="dd">${parseD(ds).getDate()}</span><span class="dm">${m ? `${fmtDur(m)} di studio` : '&nbsp;'}</span></div>`;
+  }).join('');
+  let times = '';
+  for (let m = vs; m < ve; m += 60) times += `<span style="top:${((m - vs) * ppm).toFixed(1)}px">${fmtHM(m)}</span>`;
+  const cols = days.map((ds, i) => colHTML(M, ds, layouts[i], dayItems[i], vs, ve, ppm)).join('');
+  return `<div class="cal" style="--cols:${days.length};--ppm:${ppm}">
+    <div class="cal-head"><div class="dh corner"></div>${head}</div>
+    <div class="cal-body" style="height:${Math.round((ve - vs) * ppm)}px"><div class="cal-times">${times}</div>${cols}</div></div>`;
+}
+function colHTML(M, ds, L, items, vs, ve, ppm) {
+  const y = m => (m - vs) * ppm;
+  const rects = [];
+  for (const b of L.blocks) { const s = Math.max(b.start, vs), e = Math.min(b.end, ve); if (e > s) rects.push({ s, e, b }); }
+  for (const it of items) rects.push({ s: minOfDay(it.start), e: minWithin(it.end, ds), it });
+  layoutLanes(rects);
+  const td = todayStr();
+  let h = '';
+  if (L.start > vs) h += `<div class="closed" style="top:0;height:${y(L.start).toFixed(1)}px"></div>`;
+  if (L.end < ve) h += `<div class="closed" style="top:${y(L.end).toFixed(1)}px;bottom:0"></div>`;
+  if (ds < td) h += '<div class="past" style="bottom:0"></div>';
+  else if (ds === td) { const nm = minOfDay(M.nowF); if (nm > vs) h += `<div class="past" style="height:${y(Math.min(nm, ve)).toFixed(1)}px"></div>`; }
+  for (const r of rects) {
+    const top = y(r.s) + 1, hh = Math.max(12, (r.e - r.s) * ppm - 2);
+    const lw = 100 / r.lanes, ll = r.lane * lw;
+    const pos = `top:${top.toFixed(1)}px;height:${hh.toFixed(1)}px;left:calc(${ll.toFixed(3)}% + 2px);width:calc(${lw.toFixed(3)}% - 4px)`;
+    if (r.b) {
+      const b = r.b, label = b.label || TYPES[b.type].short;
+      const tall = (r.e - r.s) * ppm >= 36;
+      h += `<div class="blk tp-${b.type}${b.src === 'exc' ? ' exc' : ''}" style="${pos};--c:${TYPES[b.type].color}" data-blk="${b.src}" data-id="${esc(b.id)}" data-date="${ds}" role="button" tabindex="0" title="${esc(label)}, ${fmtHM(b.start)}–${fmtHMend(b.end)}"><span class="bl">${esc(label)}</span>${tall ? `<span class="bt">${fmtHM(b.start)}–${fmtHMend(b.end)}</span>` : ''}</div>`;
+    } else {
+      const it = r.it, c = it.subject ? it.subject.color : '#7C88A2';
+      const mk = it.status === 'done' ? MK.check : it.status === 'skipped' ? MK.x : it.status === 'pending' ? '?' : it.status === 'running' ? '' : null;
+      const tall = (r.e - r.s) * ppm >= 27;
+      const sh = esc(it.subject ? it.subject.short : '?');
+      h += `<div class="itm ${it.status}${mk !== null ? ' has-mk' : ''}" style="${pos};--c:${c}" data-task="${esc(it.taskId)}" data-start="${it.start}" role="button" tabindex="0" title="${esc(itemTitle(it))}">${mk !== null ? `<i class="mk">${mk}</i>` : ''}<span class="l1"><span class="s">${sh}</span> ${esc(it.activity)}${tall ? '' : ' ' + esc(it.content)}</span>${tall ? `<span class="l2">${esc(it.content)}</span>` : ''}</div>`;
+    }
+  }
+  if (ds === td) { const nm = minOfDay(M.nowF); if (nm >= vs && nm <= ve) h += `<div class="nowline" style="top:${y(nm).toFixed(1)}px"></div>`; }
+  return `<div class="cal-col" data-date="${ds}" data-vs="${vs}" data-ppm="${ppm}">${h}</div>`;
+}
+function legendHTML() {
+  const used = new Set();
+  for (const d of state.template) for (const b of d.blocks) used.add(b.type);
+  for (const e of state.exceptions) used.add(e.type);
+  const types = Object.keys(TYPES).filter(k => used.has(k) && k !== 'pasto');
+  return `<div class="legend">${types.map(k => `<span><i style="--c:${TYPES[k].color}"></i>${k === 'routine' && used.has('pasto') ? 'Routine e pasti' : TYPES[k].short}</span>`).join('')}
+    <span class="tip">Tocca un blocco di studio per segnarlo svolto, saltarlo o modificarlo. Tocca uno spazio vuoto per bloccare una fascia solo per quel giorno.</span></div>`;
+}
+const idAttrs = it => `data-task="${esc(it.taskId)}" data-start="${it.start}"`;
+function agendaItemHTML(it, withDate) {
+  const c = it.subject ? it.subject.color : '#7C88A2';
+  const when = withDate ? `${cap(relDay(it.date))}<br>${fmtRange(it.start, it.end)}` : fmtRange(it.start, it.end);
+  let acts = '';
+  if (it.status === 'pending') acts = `<button class="icon-btn ok" data-act="item-done" ${idAttrs(it)} aria-label="Svolto" title="Svolto">${ICON.check}</button><button class="icon-btn no" data-act="item-skip" ${idAttrs(it)} aria-label="Non svolto, rimetti in coda" title="Non svolto: rimetti in coda">${ICON.x}</button>`;
+  else if (it.status === 'running') acts = `<button class="btn sm" data-act="task-complete" data-task="${esc(it.taskId)}">Finita</button>`;
+  else if (it.status === 'done') acts = '<span class="stx done">svolto</span>';
+  else if (it.status === 'skipped') acts = '<span class="stx skipped">non svolto</span>';
+  return `<li class="is-item" data-act="open-item" ${idAttrs(it)} style="--c:${c}"><span class="tm">${when}</span><span class="lb"><b><span class="sw"></span>${esc(it.subject ? it.subject.short : '?')} ${esc(it.activity)}</b><small>${esc(it.content || '')}</small></span><span class="acts">${acts}</span></li>`;
+}
+function todayHTML(M) {
+  const td = todayStr(), L = dayLayout(state, td), nowM = minOfDay(M.nowF);
+  const rows = [];
+  for (const b of L.blocks) if (b.type !== 'libero') rows.push({ s: b.start, html: `<li class="fixed${b.end <= nowM ? ' past' : ''}"><span class="tm">${fmtHM(b.start)}–${fmtHMend(b.end)}</span><span class="lb">${esc(b.label || TYPES[b.type].short)}</span><span></span></li>` });
+  const its = M.items.filter(i => i.date === td);
+  for (const it of its) rows.push({ s: minOfDay(it.start), html: agendaItemHTML(it, false) });
+  rows.sort((a, b) => a.s - b.s);
+  const studyNote = its.length ? '' : '<p class="empty" style="margin-top:8px">Oggi nessun blocco di studio.</p>';
+  return `<section><h2>Oggi <small>${fmtDayLong(td)}</small></h2>${rows.length ? `<ul class="alist">${rows.map(r => r.html).join('')}</ul>` : ''}${studyNote}</section>`;
+}
+function pendingHTML(M) {
+  const td = todayStr();
+  const list = M.items.filter(i => i.status === 'pending' && i.date < td);
+  if (!list.length) return '';
+  return `<section><h2>Da confermare <small>${list.length} ${list.length === 1 ? 'blocco' : 'blocchi'} dei giorni scorsi</small></h2>
+    <ul class="alist">${list.slice(0, 12).map(it => agendaItemHTML(it, true)).join('')}</ul>${list.length > 12 ? `<p class="empty">e altri ${list.length - 12}.</p>` : ''}
+    <div class="bulk"><button class="btn sm" data-act="bulk-done">${ICON.check} Tutti svolti</button><button class="btn sm" data-act="bulk-skip">${ICON.x} Tutti non svolti</button></div></section>`;
+}
+function examLine(s, si) {
+  if (!s.exam) return '';
+  if (!si.rem) return `<br><span>Esame ${fmtDayShort(s.exam)}</span>`;
+  if (si.left || !si.end) return `<br><span class="late">Esame ${fmtDayShort(s.exam)}: la coda non ci sta</span>`;
+  const margin = daysBetween(dstr(new Date(si.end)), s.exam);
+  return margin >= 0
+    ? `<br><span class="okm">Esame ${fmtDayShort(s.exam)}: margine di ${margin} ${margin === 1 ? 'giorno' : 'giorni'}</span>`
+    : `<br><span class="late">Esame ${fmtDayShort(s.exam)}: finiresti ${-margin} ${margin === -1 ? 'giorno' : 'giorni'} dopo</span>`;
+}
+function projectionHTML(M) {
+  const rows = state.subjects.map(s => {
+    const si = M.subj.get(s.id);
+    if (!si || (!si.count && !s.exam)) return '';
+    const line = !si.rem ? 'Niente in coda' : si.left ? `<span class="late">${fmtHours(si.rem)} in coda, non tutto trova spazio</span>` : `${fmtHours(si.rem)} in coda, fine ${fmtWhen(si.end)}`;
+    return `<li style="--c:${s.color}"><b>${esc(s.name)}</b><span>${line}${examLine(s, si)}</span></li>`;
+  }).join('');
+  return `<section><h2>Proiezione</h2>${rows ? `<ul class="proj">${rows}</ul>` : '<p class="empty">Aggiungi materie e attività per vedere quando finisci.</p>'}
+    <p class="empty" style="margin-top:4px">Le date d'esame si impostano nella scheda Coda, sulla materia.</p></section>`;
+}
+
+// ===== Coda =====
+function whenText(t, M) {
+  const ti = M.tinfo.get(t.id);
+  const run = ti.items.find(i => i.status === 'running');
+  if (run) return `In corso fino alle ${fmtEnd(run.end, run.date)}`;
+  const fut = ti.items.filter(i => i.status === 'future');
+  if (fut.length) {
+    const f = fut[0];
+    return fut.length === 1 ? `${cap(relDay(f.date))}, ${fmtRange(f.start, f.end)}` : `${cap(relDay(f.date))} alle ${fmtTime(f.start)}, in ${fut.length} blocchi`;
+  }
+  if (ti.left) return 'Nessuno spazio libero';
+  const pend = ti.items.filter(i => i.status === 'pending');
+  if (pend.length) return `Era in programma ${relDay(pend[pend.length - 1].date)}`;
+  return '';
+}
+function qRowHTML(t, n, M, total) {
+  const s = M.subjById.get(t.subjectId), c = s ? s.color : '#7C88A2', ti = M.tinfo.get(t.id), stt = taskState(t, M);
+  const pct = t.duration ? Math.min(100, (ti.used / t.duration) * 100) : 0;
+  return `<li class="q-row" data-id="${esc(t.id)}" style="--c:${c}">
+    <button class="q-grip" data-drag aria-label="Riordina: trascina, oppure usa le frecce su e giù" title="Trascina per riordinare (oppure frecce su/giù, Home, Fine)">${ICON.grip}</button>
+    <span class="q-n">${n}</span>
+    <span class="q-subj" title="${esc(s ? s.name : '')}">${esc(s ? s.short : '—')}</span>
+    <span class="q-main"><span class="sub-inline">${esc(s ? s.short : '')}</span><b>${esc(t.activity)}</b> <span class="ct">${esc(t.content)}</span>${t.notBefore ? `<em class="tag">dal ${fmtDayShort(t.notBefore)}</em>` : ''}${t.note ? `<span class="note">${esc(t.note)}</span>` : ''}</span>
+    <span class="q-dur">${fmtDur(t.duration)}${ti.used ? `<span class="bar"><i style="width:${pct.toFixed(0)}%"></i></span>${ti.rem ? `<small>restano ${fmtDur(ti.rem)}</small>` : ''}` : ''}</span>
+    <span class="q-when">${whenText(t, M)}</span>
+    <span class="pill ${stt.key}">${stt.label}</span>
+    <span class="q-act">
+      <button class="icon-btn ok" data-act="task-complete" data-task="${esc(t.id)}" aria-label="Segna completata" title="Segna completata">${ICON.check}</button>
+      <button class="icon-btn" data-act="task-edit" data-task="${esc(t.id)}" aria-label="Modifica" title="Modifica">${ICON.edit}</button>
+      <button class="icon-btn" data-act="task-up" data-task="${esc(t.id)}" aria-label="Sposta su" title="Sposta su" ${n === 1 ? 'disabled' : ''}>${ICON.up}</button>
+      <button class="icon-btn" data-act="task-down" data-task="${esc(t.id)}" aria-label="Sposta giù" title="Sposta giù" ${n === total ? 'disabled' : ''}>${ICON.down}</button>
+    </span></li>`;
+}
+function renderCoda(M) {
+  if (ui.filter !== 'all' && !state.subjects.some(s => s.id === ui.filter)) ui.filter = 'all';
+  const todo = state.tasks.filter(t => t.status === 'todo');
+  const vis = todo.filter(t => ui.filter === 'all' || t.subjectId === ui.filter);
+  const hist = state.tasks.filter(t => t.status !== 'todo').sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+  const subjCards = state.subjects.map(s => {
+    const si = M.subj.get(s.id);
+    const line = !si.rem ? 'Niente in coda' : si.left ? `<span class="late">${fmtHours(si.rem)} in coda, non tutto trova spazio</span>` : `${fmtHours(si.rem)} in coda, fine ${fmtWhen(si.end)}`;
+    return `<div class="subj" style="--c:${s.color}"><h3>${esc(s.name)}</h3><button class="icon-btn" data-act="subj-edit" data-id="${esc(s.id)}" aria-label="Modifica ${esc(s.name)}" title="Modifica materia ed esame">${ICON.edit}</button><p>${line}</p><p>${s.exam ? examLine(s, si).replace('<br>', '') : '<span class="muted">Data d\'esame non impostata</span>'}</p></div>`;
+  }).join('');
+  const sid = ui.quick.subjectId && state.subjects.some(s => s.id === ui.quick.subjectId) ? ui.quick.subjectId : (state.subjects[0] ? state.subjects[0].id : '');
+  const quick = state.subjects.length ? `<form class="quick" id="quick" autocomplete="off">
+      <select name="subjectId" aria-label="Materia">${state.subjects.map(s => `<option value="${esc(s.id)}" ${s.id === sid ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>
+      <input name="activity" list="acts" value="${esc(ui.quick.activity)}" aria-label="Attività" placeholder="Attività">
+      <input name="content" aria-label="Contenuto" placeholder="Contenuto, es. 2NGS.03 pp 1-12">
+      <span class="dur"><input name="duration" type="number" min="5" step="5" value="${ui.quick.duration}" aria-label="Durata in minuti"><span>min</span></span>
+      <button class="btn primary" type="submit">${ICON.plus} Aggiungi in coda</button></form>` : '';
+  $('#view-coda').innerHTML = `<div class="page-head"><div><h1>Coda PACR</h1><p>Le attività vengono messe in calendario nell'ordine della lista, negli spazi liberi da adesso in avanti. Trascina dalla maniglia per riordinare.</p></div></div>
+    ${storageBanner()}
+    <div class="subjects">${subjCards}<button class="subj add" data-act="subj-new">${ICON.plus} Nuova materia</button></div>
+    ${quick}
+    <div class="toolbar">
+      <button class="btn" data-act="batch">${ICON.plus} Aggiungi un ciclo di attività</button>
+      <button class="btn ghost" data-act="task-new">Attività con più dettagli</button>
+      <span class="spacer"></span>
+      <select data-change="filter" aria-label="Filtra per materia"><option value="all">Tutte le materie (${todo.length})</option>${state.subjects.map(s => `<option value="${esc(s.id)}" ${ui.filter === s.id ? 'selected' : ''}>${esc(s.name)} (${todo.filter(t => t.subjectId === s.id).length})</option>`).join('')}</select>
+    </div>
+    ${vis.length ? `<ol class="queue" id="queue">${vis.map((t, i) => qRowHTML(t, i + 1, M, vis.length)).join('')}</ol>` : `<div class="empty-q">${todo.length ? 'Nessuna attività per questa materia.' : state.subjects.length ? 'La coda è vuota. Aggiungi la prossima attività qui sopra, oppure un intero ciclo (lettura, schema, testing…) con «Aggiungi un ciclo di attività».' : 'Crea prima una materia, poi aggiungi le attività.'}</div>`}
+    <section class="history"><div class="toolbar"><h2 style="margin:0">Completate e annullate <span class="muted" style="font-size:18px">${hist.length}</span></h2>${hist.length ? `<button class="btn sm ghost" data-act="toggle-history">${ui.showHistory ? 'Nascondi' : 'Mostra'}</button>` : ''}</div>
+    ${ui.showHistory && hist.length ? `<ul class="hlist">${hist.map(t => { const s = M.subjById.get(t.subjectId); return `<li><span class="ic ${t.status === 'cancelled' ? 'cx' : ''}">${t.status === 'done' ? ICON.check : ICON.x}</span><span class="tx"><b>${esc(s ? s.short : '')} ${esc(t.activity)}</b> ${esc(t.content)}<small>${t.status === 'done' ? (t.completedAt ? `completata ${fmtDayShort(dstr(new Date(t.completedAt)))}` : 'completata') : 'annullata'}</small></span><button class="btn sm ghost" data-act="task-reopen" data-task="${esc(t.id)}">Riapri</button><button class="icon-btn no" data-act="task-del" data-task="${esc(t.id)}" aria-label="Elimina" title="Elimina">${ICON.trash}</button></li>`; }).join('')}</ul>` : ''}</section>`;
+  if (ui.focusQuick) { ui.focusQuick = false; const c = $('#quick [name="content"]'); if (c) c.focus(); }
+  if (ui.refocusGrip) { const g = $(`.q-row[data-id="${CSS.escape(ui.refocusGrip)}"] .q-grip`); ui.refocusGrip = null; if (g) { g.focus(); g.scrollIntoView({ block: 'nearest' }); } }
+}
+
+// ===== Impegni =====
+function blockRowHTML(wd, b, ov) {
+  return `<li class="${ov ? 'overlap' : ''}" data-wd="${wd}" data-id="${esc(b.id)}">
+    ${timeField(b.start, 'data-f="bstart" aria-label="Dalle"')}
+    ${timeField(b.end, 'data-f="bend" aria-label="Alle"')}
+    <select data-f="btype" aria-label="Tipo">${Object.entries(TYPES).map(([k, T]) => `<option value="${k}" ${k === b.type ? 'selected' : ''}>${T.short}</option>`).join('')}</select>
+    <input data-f="blabel" value="${esc(b.label)}" placeholder="${esc(TYPES[b.type].short)}" aria-label="Descrizione">
+    <button class="icon-btn no" data-act="blk-del" aria-label="Elimina blocco" title="Elimina blocco">${ICON.trash}</button></li>`;
+}
+function dayDerived(wd) {
+  const d = state.template[wd];
+  const blocks = [...d.blocks].sort((a, b) => a.start - b.start || a.end - b.end);
+  const overl = new Set();
+  for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++)
+    if (blocks[j].start < blocks[i].end && blocks[i].start < blocks[j].end) { overl.add(blocks[i].id); overl.add(blocks[j].id); }
+  const free = freeOf({ start: d.start, end: d.end, blocks }).reduce((a, [x, y]) => a + y - x, 0);
+  const R0 = 360, R1 = 1440, pct = m => ((Math.min(R1, Math.max(R0, m)) - R0) / (R1 - R0)) * 100;
+  let bar = '';
+  if (d.start > R0) bar += `<i class="off" style="left:0;width:${pct(d.start).toFixed(2)}%"></i>`;
+  if (d.end < R1) bar += `<i class="off" style="left:${pct(d.end).toFixed(2)}%;right:0"></i>`;
+  for (const b of blocks) bar += `<i class="bk tp-${b.type}" style="--c:${TYPES[b.type].color};left:${pct(b.start).toFixed(2)}%;width:${(pct(b.end) - pct(b.start)).toFixed(2)}%" title="${esc(b.label || TYPES[b.type].short)} ${fmtHM(b.start)}–${fmtHMend(b.end)}"></i>`;
+  return { blocks, overl, free, bar };
+}
+function dayCardHTML(wd) {
+  const d = state.template[wd], D = dayDerived(wd);
+  const ticks = [360, 720, 1080, 1440].map(m => `<span style="left:${(((m - 360) / 1080) * 100).toFixed(2)}%">${fmtHMend(m)}</span>`).join('');
+  return `<article class="dcard" id="dcard-${wd}">
+    <header><h2>${DAY_TITLES[wd]}</h2><span class="avail"><b>${fmtHours(D.free)}</b> per lo studio</span></header>
+    <div class="dwin">Giornata dalle ${timeField(d.start, `data-f="dstart" data-wd="${wd}" aria-label="Inizio giornata, ${DAY_NAMES[wd]}"`)} alle ${timeField(d.end, `data-f="dend" data-wd="${wd}" aria-label="Fine giornata, ${DAY_NAMES[wd]}"`)}</div>
+    <div class="dbar" aria-hidden="true">${D.bar}</div><div class="dticks" aria-hidden="true">${ticks}</div>
+    ${D.blocks.length ? `<ul class="blist">${D.blocks.map(b => blockRowHTML(wd, b, D.overl.has(b.id))).join('')}</ul>` : '<p class="empty">Nessun impegno: tutta la giornata è disponibile.</p>'}
+    <p class="warnline" ${D.overl.size ? '' : 'hidden'}>Alcuni blocchi si sovrappongono.</p>
+    <div class="dfoot"><button class="btn sm" data-act="blk-add" data-wd="${wd}">${ICON.plus} Blocco</button><button class="btn sm ghost" data-act="day-copy" data-wd="${wd}">${ICON.copy} Copia su altri giorni</button></div>
+  </article>`;
+}
+const weekFree = () => state.template.reduce((a, d) => a + freeOf({ start: d.start, end: d.end, blocks: d.blocks }).reduce((x, [p, q]) => x + q - p, 0), 0);
+function renderImpegni() {
+  const td = todayStr(), from = addDays(td, -7);
+  const exc = state.exceptions.filter(e => e.date >= from).sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start);
+  const canc = state.cancels.filter(c => c.date >= from).sort((a, b) => a.date.localeCompare(b.date));
+  const rowsE = exc.map(e => `<li class="${e.date < td ? 'past-row' : ''}"><span class="ds">${cap(fmtDayShort(e.date))}, ${fmtHM(e.start)}–${fmtHMend(e.end)}</span><span class="ty" style="--c:${TYPES[e.type].color}"><i></i>${esc(TYPES[e.type].short)}</span><span>${esc(e.label)}</span><span><button class="icon-btn" data-act="exc-edit" data-id="${esc(e.id)}" aria-label="Modifica" title="Modifica">${ICON.edit}</button><button class="icon-btn no" data-act="exc-del" data-id="${esc(e.id)}" aria-label="Elimina" title="Elimina">${ICON.trash}</button></span></li>`).join('');
+  const rowsC = canc.map(c => {
+    const b = state.template[weekday(c.date)].blocks.find(x => x.id === c.blockId);
+    if (!b) return '';
+    return `<li class="${c.date < td ? 'past-row' : ''}"><span class="ds">${cap(fmtDayShort(c.date))}, ${fmtHM(b.start)}–${fmtHMend(b.end)}</span><span class="ty" style="--c:${TYPES[b.type].color}"><i></i>Tolto</span><span>${esc(b.label || TYPES[b.type].short)} (settimana tipo)</span><span><button class="btn sm ghost" data-act="cancel-restore" data-date="${c.date}" data-id="${esc(c.blockId)}">Ripristina</button></span></li>`;
+  }).join('');
+  $('#view-impegni').innerHTML = `<div class="page-head"><div><h1>Impegni</h1><p>La settimana tipo si ripete ogni settimana. Dentro l'orario della giornata, tutto ciò che non è occupato da un blocco è tempo per lo studio: nella barra di ogni giorno è la parte rosa. I blocchi «Libero» sono tempo tuo e la coda non li usa.</p></div>
+      <p class="tpl-total">Disponibili per lo studio: <b id="week-free">${fmtHours(weekFree())}</b> a settimana</p></div>
+    <div class="tpl-grid">${[0, 1, 2, 3, 4, 5, 6].map(dayCardHTML).join('')}</div>
+    <section class="exc-sec"><h2>Eccezioni e giorni speciali</h2>
+      <p>Valgono per una sola data: un esame, una visita, un turno di lavoro, un giorno di vacanza. Puoi crearle anche toccando uno spazio vuoto nel calendario.</p>
+      ${rowsE || rowsC ? `<ul class="elist">${rowsE}${rowsC}</ul>` : '<p class="empty">Nessuna eccezione nei prossimi giorni.</p>'}
+      <div class="dfoot"><button class="btn" data-act="exc-new">${ICON.plus} Eccezione</button><button class="btn" data-act="dayoff-new">Giorni liberi</button></div></section>`;
+  if (ui.flashDay != null) {
+    const c = $(`#dcard-${ui.flashDay}`);
+    ui.flashDay = null;
+    if (c) { c.scrollIntoView({ block: 'start' }); c.classList.add('flash'); }
+  }
+}
+function refreshDayCard(wd) {
+  const card = $(`#dcard-${wd}`);
+  if (!card) return;
+  const D = dayDerived(wd);
+  card.querySelector('.avail b').textContent = fmtHours(D.free);
+  card.querySelector('.dbar').innerHTML = D.bar;
+  card.querySelectorAll('.blist li').forEach(li => li.classList.toggle('overlap', D.overl.has(li.dataset.id)));
+  card.querySelector('.warnline').hidden = !D.overl.size;
+  const wf = $('#week-free');
+  if (wf) wf.textContent = fmtHours(weekFree());
+}
+function onTplChange(el) {
+  const f = el.dataset.f;
+  if (!f) return;
+  if (f === 'dstart' || f === 'dend') {
+    const wd = +el.dataset.wd, v = parseTimeStr(el.value), d = state.template[wd];
+    const ns = f === 'dstart' ? v : d.start, ne = f === 'dend' ? v : d.end;
+    if (!Number.isFinite(v)) { toast('Orario non valido: scrivi per esempio 9:30 o 2130', false); el.value = fmtHMend(f === 'dstart' ? d.start : d.end); return; }
+    if (ne <= ns) { toast('La fine della giornata deve essere dopo l\'inizio', false); el.value = fmtHMend(f === 'dstart' ? d.start : d.end); return; }
+    el.value = fmtHMend(v);
+    mutate(s => { s.template[wd].start = ns; s.template[wd].end = ne; }, null, { rerender: false });
+    refreshDayCard(wd);
+    return;
+  }
+  const li = el.closest('li[data-id]');
+  if (!li) return;
+  const wd = +li.dataset.wd, id = li.dataset.id, b = state.template[wd].blocks.find(x => x.id === id);
+  if (!b) return;
+  if (f === 'bstart' || f === 'bend') {
+    const v = parseTimeStr(el.value);
+    const ns = f === 'bstart' ? v : b.start, ne = f === 'bend' ? v : b.end;
+    if (!Number.isFinite(v)) { toast('Orario non valido: scrivi per esempio 9:30 o 2130', false); el.value = fmtHMend(f === 'bstart' ? b.start : b.end); return; }
+    if (ne <= ns) { toast('La fine del blocco deve essere dopo l\'inizio', false); el.value = fmtHMend(f === 'bstart' ? b.start : b.end); return; }
+    el.value = fmtHMend(v);
+    mutate(s => { const x = s.template[wd].blocks.find(y => y.id === id); x.start = ns; x.end = ne; }, null, { rerender: false });
+  } else if (f === 'btype') {
+    mutate(s => { s.template[wd].blocks.find(y => y.id === id).type = el.value; }, null, { rerender: false });
+    li.querySelector('[data-f="blabel"]').placeholder = TYPES[el.value].short;
+  } else if (f === 'blabel') {
+    mutate(s => { s.template[wd].blocks.find(y => y.id === id).label = el.value.trim(); }, null, { rerender: false });
+  }
+  refreshDayCard(wd);
+}
+function addTplBlock(wd) {
+  const d = state.template[wd];
+  const free = freeOf({ start: d.start, end: d.end, blocks: d.blocks });
+  const slot = free.find(([a, b]) => b - a >= 60) || free[0] || [d.start, Math.min(d.end, d.start + 60)];
+  const start = slot[0], end = Math.min(slot[1], start + 60);
+  const id = uid('b');
+  mutate(s => { s.template[wd].blocks.push({ id, start, end: Math.max(end, start + 15), type: 'altro', label: '' }); }, 'Blocco aggiunto');
+  const inp = document.querySelector(`li[data-id="${id}"] [data-f="blabel"]`);
+  if (inp) { inp.scrollIntoView({ block: 'center' }); inp.focus(); }
+}
+
+// ===== Dati =====
+function renderDati() {
+  const last = state.settings.lastBackup;
+  $('#view-dati').innerHTML = `<div class="page-head"><div><h1>Dati</h1><p>Backup, esportazione per Excel e impostazioni della pianificazione.</p></div></div>
+    ${storageBanner()}
+    <section class="panel"><h2>Backup</h2>
+      <p>Tutto è salvato su questo dispositivo, dentro l'app: niente passa da un server. Se elimini l'app o cambi telefono non ritrovi il piano, quindi scarica un backup ogni tanto. ${last ? `Ultimo backup: ${fmtWhen(last)}.` : 'Non hai ancora fatto un backup.'}</p>
+      <div class="row"><button class="btn primary" data-act="backup-save">${ICON.download} Scarica backup</button><button class="btn" data-act="backup-copy">${ICON.copy} Copia negli appunti</button></div>
+      <div class="row"><label class="btn">${ICON.upload} Importa da file<input type="file" accept=".json,application/json" data-change="import-file" hidden></label><button class="btn" data-act="backup-paste">Incolla un backup</button></div>
+    </section>
+    <section class="panel"><h2>Esporta per Excel</h2><p>File CSV con separatore punto e virgola: si apre direttamente in Excel.</p>
+      <div class="row"><button class="btn" data-act="csv-plan">${ICON.download} Calendario dei blocchi di studio</button><button class="btn" data-act="csv-queue">${ICON.download} Coda delle attività</button></div></section>
+    <section class="panel"><h2>Pianificazione</h2>
+      <p>Il blocco minimo evita spezzoni troppo corti: la coda non usa ritagli di tempo più brevi di così, salvo per finire un'attività. A 30 minuti funziona come il file Excel; a 60 eviti le mezz'ore isolate, ma qualche ritaglio resta vuoto.</p>
+      <label class="inline">Blocco minimo <select data-change="minchunk">${[15, 20, 30, 45, 60, 90].map(m => `<option value="${m}" ${m === +state.settings.minChunk ? 'selected' : ''}>${m} minuti</option>`).join('')}</select></label></section>
+    <section class="panel"><h2>Aspetto</h2>
+      <label class="inline">Tema <select data-change="theme">${[['auto', 'Come il sistema'], ['light', 'Chiaro'], ['dark', 'Scuro']].map(([v, l]) => `<option value="${v}" ${state.settings.theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label></section>
+    <section class="panel warnp"><h2>Ripristino</h2>
+      <p>Puoi svuotare coda e storico mantenendo materie e settimana tipo (utile a inizio semestre). Subito dopo puoi ancora annullare.</p>
+      <div class="row"><button class="btn danger" data-act="reset-empty">Svuota coda e storico</button></div></section>`;
+}
+
+// ---------- finestre ----------
+function modal({ kick = '', color = '', title, sub = '', html = '', foot = '', wide = false }) {
+  const d = document.createElement('dialog');
+  d.className = `modal${wide ? ' wide' : ''}`;
+  if (color) d.style.setProperty('--c', color);
+  d.innerHTML = `<div class="m-wrap"><div class="m-head"><div>${kick ? `<span class="kick">${esc(kick)}</span>` : ''}<h2>${esc(title)}</h2>${sub ? `<p class="m-sub">${sub}</p>` : ''}</div><button type="button" class="icon-btn" data-close aria-label="Chiudi">${ICON.x}</button></div><div class="m-body">${html}</div>${foot ? `<div class="m-foot">${foot}</div>` : ''}</div>`;
+  document.body.appendChild(d);
+  d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); });
+  d.addEventListener('close', () => d.remove());
+  d.showModal();
+  return d;
+}
+function sheet({ kick, color, title, sub, actions }) {
+  const html = `<div class="actions">${actions.map((a, i) => a === '-' ? '<hr>' : `<button type="button" class="btn ${a.kind || ''}" data-i="${i}">${a.icon || ''}<span>${esc(a.label)}${a.hint ? `<span class="hint">${esc(a.hint)}</span>` : ''}</span></button>`).join('')}</div>`;
+  const d = modal({ kick, color, title, sub, html });
+  d.querySelector('.actions').addEventListener('click', e => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    d.close();
+    actions[+b.dataset.i].fn();
+  });
+  const first = d.querySelector('.actions .btn');
+  if (first) first.focus();
+}
+function confirmDialog({ title, body, ok, danger = false, fn }) {
+  const d = modal({ title, html: `<p style="margin:0;color:var(--ink-2)">${body}</p>`, foot: `<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn ${danger ? 'danger' : 'primary'}" data-ok>${esc(ok)}</button>` });
+  d.querySelector('[data-ok]').addEventListener('click', () => { d.close(); fn(); });
+}
+function itemFromEl(el) { return findItem(buildModel(), el.dataset.task, el.dataset.start); }
+
+function openItemSheet(taskId, start) {
+  const M = buildModel();
+  const it = findItem(M, taskId, start);
+  if (!it) return;
+  const t = it.task, ti = t ? M.tinfo.get(t.id) : null;
+  const stText = { future: 'In programma.', running: 'In corso adesso.', pending: 'Da confermare.', done: 'Svolto.', skipped: 'Non svolto: il tempo è tornato in coda.' }[it.status];
+  const A = [];
+  const add = (label, hint, fn, kind = '', icon = '') => A.push({ label, hint, fn, kind, icon });
+  if (it.status === 'pending') {
+    add('Svolto', 'Conferma questo blocco', () => setItemsStatus([it], 'done'), 'primary', ICON.check);
+    add('Non svolto', 'Il tempo torna in coda e il resto slitta in avanti, da adesso', () => setItemsStatus([it], 'skipped'), '', ICON.x);
+    if (t && t.status === 'todo' && ti && ti.rem > 0) add('Svolto, e attività finita', `Chiude l'attività e libera i ${fmtDur(ti.rem)} che restavano in programma`, () => completeTask(t.id), '', ICON.check);
+  } else if (it.status === 'running') {
+    add('Finita adesso', 'Le attività successive partono subito', () => completeTask(t.id), 'primary', ICON.check);
+    add('Mi servono altri 30 minuti', 'Allunga l\'attività: il resto slitta di mezz\'ora', () => changeDuration(t.id, 30), '', ICON.plus);
+    add('Mi fermo qui', `Quello fatto finora resta; il resto dell'attività va al prossimo spazio libero`, () => addSkip(it.date, minOfDay(floorMin(Date.now())), minWithin(it.end, it.date), 'Interrotta: il resto va più avanti'), '', ICON.skip);
+    add('Non l\'ho ancora iniziata', 'Il pezzo già passato non conta: riparte da adesso con la durata piena', () => restartNow(it), '', ICON.play);
+  } else if (it.status === 'future') {
+    add('Salta questo blocco', `${cap(relDay(it.date))} dalle ${fmtTime(it.start)} alle ${fmtEnd(it.end, it.date)} non ci sei: la coda slitta in avanti`, () => addSkip(it.date, minOfDay(it.start), minWithin(it.end, it.date)), '', ICON.skip);
+    add('Già completata', 'Chiude l\'attività adesso: le successive anticipano', () => completeTask(t.id), '', ICON.check);
+    add('Mi serviranno altri 30 minuti', 'Allunga l\'attività', () => changeDuration(t.id, 30), '', ICON.plus);
+    add('Falla per prima', 'Sposta l\'attività in cima alla coda', () => moveTask(t.id, 'top'), '', ICON.top);
+    add('Rimandala in fondo', 'Sposta l\'attività in fondo alla coda', () => moveTask(t.id, 'bottom'), '', ICON.bottom);
+  } else if (it.status === 'done') {
+    add('Torna da confermare', '', () => setItemsStatus([it], 'planned'), '', ICON.undo);
+    add('Non svolto', 'Il tempo torna in coda', () => setItemsStatus([it], 'skipped'), '', ICON.x);
+  } else if (it.status === 'skipped') {
+    add('In realtà l\'ho svolto', 'Il tempo torna a contare come fatto', () => setItemsStatus([it], 'done'), '', ICON.check);
+  }
+  if (t) { A.push('-'); add('Modifica attività', 'Durata, contenuto, note, «non prima del»', () => openTaskEditor(t.id), 'ghost', ICON.edit); }
+  const title = `${it.activity}${it.content ? ' ' + it.content : ''}`;
+  const note = t && t.note ? ` Nota: ${esc(t.note)}` : '';
+  sheet({ kick: it.subject ? it.subject.name : 'Materia eliminata', color: it.subject ? it.subject.color : '', title, sub: `${esc(cap(fmtDayLong(it.date)))}, ${fmtRange(it.start, it.end)} (${fmtDur((it.end - it.start) / MIN)}). ${stText}${note}`, actions: A });
+}
+function openBlockSheet(ds, src, id) {
+  const b = dayLayout(state, ds).blocks.find(x => x.src === src && x.id === id);
+  if (!b) return;
+  const label = b.label || TYPES[b.type].short;
+  const A = [];
+  if (src === 'tpl') {
+    A.push({ label: 'Toglilo solo per questa data', hint: b.type === 'libero' ? 'Quel tempo diventa disponibile per lo studio' : 'Il tempo si libera e la coda può usarlo', icon: ICON.x, fn: () => mutate(s => { s.cancels.push({ date: ds, blockId: id }); }, `${label}: tolto per ${fmtDayShort(ds)}`) });
+    A.push({ label: 'Cambia orario solo per questa data', hint: 'Crea un\'eccezione al posto del blocco', icon: ICON.clock, fn: () => openExceptionEditor({ date: ds, start: b.start, end: b.end, type: b.type, label: b.label, replaceTpl: id }) });
+    A.push({ label: 'Modifica la settimana tipo', hint: `Vale per tutti i ${DAY_NAMES[weekday(ds)]}`, icon: ICON.edit, kind: 'ghost', fn: () => { ui.tab = 'impegni'; ui.flashDay = weekday(ds); render(); } });
+  } else {
+    A.push({ label: 'Modifica', icon: ICON.edit, fn: () => openExceptionEditor({ id }) });
+    A.push({ label: 'Elimina', hint: 'Quel tempo torna come nella settimana tipo', icon: ICON.trash, kind: 'danger', fn: () => mutate(s => { s.exceptions = s.exceptions.filter(e => e.id !== id); }, 'Eccezione eliminata') });
+  }
+  sheet({ kick: TYPES[b.type].label, color: TYPES[b.type].color, title: label, sub: `${esc(cap(fmtDayLong(ds)))}, ${fmtHM(b.start)}–${fmtHMend(b.end)}. ${src === 'tpl' ? 'Dalla settimana tipo.' : 'Eccezione solo per questa data.'}`, actions: A });
+}
+function freeClick(col, e) {
+  const rect = col.getBoundingClientRect();
+  const m = +col.dataset.vs + (e.clientY - rect.top) / +col.dataset.ppm;
+  const start = Math.max(0, Math.min(1410, Math.floor(m / 30) * 30));
+  const ds = col.dataset.date;
+  if (tsOf(ds, start + 30) <= Date.now()) { toast('Il passato non si modifica: segna i blocchi passati come svolti o non svolti', false); return; }
+  openExceptionEditor({ date: ds, start, end: Math.min(1440, start + 60), type: 'saltato', label: '', fromCalendar: true });
+}
+
+function setItemsStatus(items, st) {
+  if (!items.length) return;
+  const msg = { done: items.length > 1 ? `${items.length} blocchi segnati come svolti` : 'Segnato come svolto', skipped: 'Rimesso in coda: il resto slitta in avanti', planned: 'Torna da confermare' }[st];
+  mutate(s => {
+    for (const it of items) {
+      for (const f of s.frozen) if (f.taskId === it.taskId && f.start < it.end && f.end > it.start) f.st = st;
+      if (st === 'skipped') { const t = s.tasks.find(x => x.id === it.taskId); if (t && t.status === 'done') { t.status = 'todo'; t.completedAt = null; } }
+    }
+  }, msg);
+}
+function completeTask(id) {
+  mutate(s => {
+    const t = s.tasks.find(x => x.id === id);
+    if (!t) return;
+    t.status = 'done'; t.completedAt = Date.now();
+    for (const f of s.frozen) if (f.taskId === id && f.st === 'planned') f.st = 'done';
+  }, 'Attività completata');
+}
+function restartNow(it) {
+  mutate(s => { for (const f of s.frozen) if (f.taskId === it.taskId && f.start < it.end && f.end > it.start && f.st === 'planned') f.st = 'skipped'; }, 'Riparte da adesso');
+}
+function changeDuration(id, delta) {
+  mutate(s => { const t = s.tasks.find(x => x.id === id); if (t) t.duration = Math.max(5, t.duration + delta); }, delta > 0 ? `Aggiunti ${delta} minuti` : 'Durata aggiornata');
+}
+function addSkip(ds, s0, e0, msg) {
+  if (e0 <= s0) return;
+  mutate(s => { s.exceptions.push({ id: uid('e'), date: ds, start: s0, end: e0, type: 'saltato', label: 'Saltato' }); }, msg || 'Blocco saltato: la coda slitta in avanti');
+}
+function applyOrder(oldIds, newIds, msg) {
+  mutate(s => {
+    const set = new Set(oldIds), byId = new Map(s.tasks.map(t => [t.id, t]));
+    let k = 0;
+    s.tasks = s.tasks.map(t => (set.has(t.id) ? byId.get(newIds[k++]) : t));
+  }, msg);
+}
+function moveTask(id, where) {
+  const all = state.tasks.filter(t => t.status === 'todo');
+  const vis = where === 'up' || where === 'down' ? all.filter(t => ui.filter === 'all' || t.subjectId === ui.filter) : all;
+  const old = vis.map(t => t.id), ids = [...old], i = ids.indexOf(id);
+  if (i < 0) return;
+  ids.splice(i, 1);
+  const j = where === 'top' ? 0 : where === 'bottom' ? ids.length : where === 'up' ? Math.max(0, i - 1) : Math.min(ids.length, i + 1);
+  ids.splice(j, 0, id);
+  if (ids.join() === old.join()) return;
+  applyOrder(old, ids, where === 'top' ? 'Spostata in cima alla coda' : where === 'bottom' ? 'Spostata in fondo alla coda' : 'Ordine aggiornato');
+}
+function shortName(name) {
+  const w = name.trim().split(/\s+/).filter(Boolean);
+  if (w.length >= 2 && w.length <= 4) return w.map(x => x[0].toUpperCase()).join('');
+  return name.trim().slice(0, 10);
+}
+function nextColor(s = state) {
+  const used = new Set(s.subjects.map(x => x.color.toUpperCase()));
+  return SUBJECT_COLORS.find(c => !used.has(c.toUpperCase())) || SUBJECT_COLORS[s.subjects.length % SUBJECT_COLORS.length];
+}
+
+function openTaskEditor(id) {
+  const t = id ? state.tasks.find(x => x.id === id) : null;
+  const M = buildModel(), ti = t ? M.tinfo.get(t.id) : null;
+  const v = t ? { ...t } : { subjectId: ui.quick.subjectId || (state.subjects[0] ? state.subjects[0].id : ''), activity: ui.quick.activity || 'Lettura', content: '', duration: ui.quick.duration || 60, notBefore: null, note: '', status: 'todo' };
+  const html = `<form class="form" novalidate>
+    <label class="field"><span>Materia</span><select name="subjectId">${state.subjects.map(s => `<option value="${esc(s.id)}" ${s.id === v.subjectId ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}<option value="__new" ${state.subjects.length ? '' : 'selected'}>Nuova materia…</option></select></label>
+    <label class="field" data-newsub ${state.subjects.length ? 'hidden' : ''}><span>Nome della nuova materia</span><input name="newSubject" placeholder="es. Bioinformatics"></label>
+    <label class="field"><span>Attività</span><input name="activity" list="acts" value="${esc(v.activity)}"></label>
+    <label class="field full"><span>Contenuto</span><input name="content" value="${esc(v.content)}" placeholder="es. 2NGS.02 pp 4-18, cap. 3, lezione 5"></label>
+    <div class="field full"><span>Durata</span><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input name="duration" type="number" min="5" step="5" value="${v.duration}" style="width:100px" aria-label="Durata in minuti"><span class="muted">minuti</span><div class="chips">${[30, 45, 60, 90, 120].map(m => `<button type="button" class="chip" data-dur="${m}" aria-pressed="${m === +v.duration}">${fmtDur(m)}</button>`).join('')}</div></div>${ti && ti.used ? `<small>Già trascorsi in calendario: ${fmtDur(ti.used)}. Se la allunghi, il tempo in più viene pianificato da adesso.</small>` : ''}</div>
+    <label class="field"><span>Non prima del</span><input name="notBefore" type="date" value="${v.notBefore || ''}"><small>Facoltativo, utile per i ripassi distanziati.</small></label>
+    ${t ? `<label class="field"><span>Stato</span><select name="status"><option value="todo" ${v.status === 'todo' ? 'selected' : ''}>Da fare</option><option value="done" ${v.status === 'done' ? 'selected' : ''}>Completata</option><option value="cancelled" ${v.status === 'cancelled' ? 'selected' : ''}>Annullata</option></select></label>`
+      : '<label class="field"><span>Posizione in coda</span><select name="pos"><option value="bottom">In fondo</option><option value="top">In cima: la fai per prima</option></select></label>'}
+    <label class="field full"><span>Note</span><textarea name="note" rows="2">${esc(v.note || '')}</textarea></label>
+  </form><p class="err" hidden></p>`;
+  const foot = `${t ? `<button type="button" class="btn danger left" data-del>${ICON.trash} Elimina</button>` : ''}<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-save>${t ? 'Salva' : 'Aggiungi in coda'}</button>`;
+  const d = modal({ title: t ? 'Modifica attività' : 'Nuova attività', html, foot });
+  const f = d.querySelector('form'), err = d.querySelector('.err');
+  const fail = msg => { err.textContent = msg; err.hidden = false; };
+  f.subjectId.addEventListener('change', () => { d.querySelector('[data-newsub]').hidden = f.subjectId.value !== '__new'; });
+  f.addEventListener('click', e => {
+    const c = e.target.closest('[data-dur]');
+    if (!c) return;
+    f.duration.value = c.dataset.dur;
+    f.querySelectorAll('[data-dur]').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+  });
+  f.addEventListener('submit', e => e.preventDefault());
+  d.querySelector('[data-save]').addEventListener('click', () => {
+    let subjectId = f.subjectId.value;
+    const newName = f.newSubject.value.trim(), activity = f.activity.value.trim(), content = f.content.value.trim();
+    const duration = Math.round(+f.duration.value), notBefore = f.notBefore.value || null, note = f.note.value.trim();
+    if (subjectId === '__new' && !newName) return fail('Scrivi il nome della nuova materia.');
+    if (!activity) return fail('Indica l\'attività, per esempio Lettura o Schema.');
+    if (!(duration >= 5)) return fail('La durata deve essere di almeno 5 minuti.');
+    d.close();
+    mutate(s => {
+      if (subjectId === '__new') {
+        const ns = { id: uid('s'), name: newName, short: shortName(newName), color: nextColor(s), exam: null };
+        s.subjects.push(ns); subjectId = ns.id;
+      }
+      if (t) {
+        const x = s.tasks.find(y => y.id === t.id);
+        Object.assign(x, { subjectId, activity, content, duration, notBefore, note });
+        const nst = f.status.value;
+        if (nst !== x.status) {
+          x.status = nst; x.completedAt = nst === 'done' ? Date.now() : null;
+          if (nst === 'done') for (const fz of s.frozen) if (fz.taskId === x.id && fz.st === 'planned') fz.st = 'done';
+        }
+      } else {
+        const nt = { id: uid('t'), subjectId, activity, content, duration, status: 'todo', notBefore, note, completedAt: null };
+        if (f.pos.value === 'top') s.tasks.unshift(nt); else s.tasks.push(nt);
+      }
+    }, t ? 'Attività aggiornata' : 'Attività aggiunta in coda');
+  });
+  if (t) d.querySelector('[data-del]').addEventListener('click', () => {
+    d.close();
+    mutate(s => { s.tasks = s.tasks.filter(x => x.id !== t.id); s.frozen = s.frozen.filter(fz => fz.taskId !== t.id); }, 'Attività eliminata');
+  });
+  (t ? f.content : f.activity).focus();
+}
+function openSubjectEditor(id) {
+  const s0 = id ? state.subjects.find(s => s.id === id) : null;
+  const nTasks = s0 ? state.tasks.filter(t => t.subjectId === id).length : 0;
+  const color0 = s0 ? s0.color : nextColor();
+  const palette = SUBJECT_COLORS.includes(color0) ? SUBJECT_COLORS : [color0, ...SUBJECT_COLORS];
+  const html = `<form class="form" novalidate>
+    <label class="field full"><span>Nome</span><input name="name" value="${esc(s0 ? s0.name : '')}" placeholder="es. Advanced Machine Learning"></label>
+    <label class="field"><span>Sigla nel calendario</span><input name="short" maxlength="12" value="${esc(s0 ? s0.short : '')}" placeholder="es. AML"></label>
+    <label class="field"><span>Data d'esame</span><input name="exam" type="date" value="${s0 && s0.exam ? s0.exam : ''}"><small>Facoltativa: serve a vedere se la coda finisce in tempo.</small></label>
+    <div class="field full"><span>Colore</span><div class="swatches">${palette.map(c => `<label style="--c:${c}"><input type="radio" name="color" value="${c}" ${c.toUpperCase() === color0.toUpperCase() ? 'checked' : ''} aria-label="Colore ${c}"><span></span></label>`).join('')}</div></div>
+  </form><p class="err" hidden></p>`;
+  const foot = `${s0 ? `<button type="button" class="btn danger left" data-del ${nTasks ? 'disabled title="Ha ancora attività: eliminale o spostale prima"' : ''}>${ICON.trash} Elimina</button>` : ''}<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-save>${s0 ? 'Salva' : 'Crea materia'}</button>`;
+  const d = modal({ title: s0 ? 'Modifica materia' : 'Nuova materia', html, foot });
+  const f = d.querySelector('form'), err = d.querySelector('.err');
+  f.addEventListener('submit', e => e.preventDefault());
+  d.querySelector('[data-save]').addEventListener('click', () => {
+    const name = f.name.value.trim();
+    if (!name) { err.textContent = 'Scrivi il nome della materia.'; err.hidden = false; return; }
+    const short = f.short.value.trim() || shortName(name), exam = f.exam.value || null;
+    const color = (f.querySelector('input[name="color"]:checked') || {}).value || color0;
+    d.close();
+    mutate(s => {
+      if (s0) Object.assign(s.subjects.find(x => x.id === s0.id), { name, short, exam, color });
+      else s.subjects.push({ id: uid('s'), name, short, exam, color });
+    }, s0 ? 'Materia aggiornata' : 'Materia creata');
+  });
+  if (s0 && !nTasks) d.querySelector('[data-del]').addEventListener('click', () => { d.close(); mutate(s => { s.subjects = s.subjects.filter(x => x.id !== s0.id); }, 'Materia eliminata'); });
+  f.name.focus();
+}
+function openBatch() {
+  if (!state.subjects.length) { openSubjectEditor(null); return; }
+  const phase = (n, m, on) => `<div class="phase"><input type="checkbox" ${on ? 'checked' : ''} aria-label="Includi"><input class="pn" value="${esc(n)}" aria-label="Fase"><input class="pd" type="number" min="5" step="5" value="${m}" aria-label="Minuti"></div>`;
+  const sid = ui.quick.subjectId || state.subjects[0].id;
+  const html = `<div class="form">
+    <label class="field"><span>Materia</span><select name="subjectId">${state.subjects.map(s => `<option value="${esc(s.id)}" ${s.id === sid ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
+    <label class="field"><span>Capitolo o prefisso</span><input name="prefix" placeholder="es. 2NGS.03."><small>Va davanti a ogni contenuto e nelle fasi finali.</small></label>
+    <label class="field full"><span>Contenuti, uno per riga</span><textarea name="lines" rows="5" placeholder="pp 1-12&#10;pp 13-25&#10;pp 26-40"></textarea></label>
+    <div class="field full"><span>Per ogni contenuto, in quest'ordine</span><div class="phases" data-g="each">${phase('Lettura', 30, true)}${phase('Schema', 60, true)}${phase('Ripresa appunti', 30, false)}${phase('Esercizi', 60, false)}</div></div>
+    <div class="field full"><span>Alla fine, una volta sola</span><div class="phases" data-g="end">${phase('Testing', 30, true)}${phase('Ripasso Leitner', 30, false)}</div></div>
+    <label class="field"><span>Posizione</span><select name="pos"><option value="bottom">In fondo alla coda</option><option value="top">In cima alla coda</option></select></label>
+  </div><div class="preview" aria-live="polite"></div>`;
+  const d = modal({ title: 'Aggiungi un ciclo di attività', sub: 'Per ogni contenuto crea le fasi scelte, nell\'ordine, poi le fasi finali. Come nel tuo file: Lettura e Schema per ogni gruppo di pagine, Testing a fine capitolo.', html, wide: true,
+    foot: '<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-save>Aggiungi in coda</button>' });
+  const q = n => d.querySelector(`[name="${n}"]`);
+  const build = () => {
+    const prefix = q('prefix').value.trim();
+    const lines = q('lines').value.split('\n').map(x => x.trim()).filter(Boolean);
+    const ph = g => [...d.querySelectorAll(`[data-g="${g}"] .phase`)].filter(p => p.querySelector('input[type="checkbox"]').checked)
+      .map(p => ({ a: p.querySelector('.pn').value.trim(), m: Math.round(+p.querySelector('.pd').value) })).filter(p => p.a && p.m >= 5);
+    const out = [];
+    for (const l of lines) for (const p of ph('each')) out.push({ activity: p.a, content: prefix ? `${prefix} ${l}` : l, duration: p.m });
+    const endContent = prefix || (lines.length === 1 ? lines[0] : '');
+    for (const p of ph('end')) out.push({ activity: p.a, content: endContent, duration: p.m });
+    return out;
+  };
+  const prev = d.querySelector('.preview');
+  const upd = () => {
+    const out = build();
+    prev.innerHTML = out.length ? `<b>${out.length} attività, ${fmtHours(out.reduce((a, x) => a + x.duration, 0))}</b><ol>${out.map(x => `<li>${esc(x.activity)} ${esc(x.content)} <span class="muted">(${fmtDur(x.duration)})</span></li>`).join('')}</ol>` : 'Scrivi almeno un contenuto o scegli una fase finale.';
+  };
+  d.addEventListener('input', upd); d.addEventListener('change', upd); upd();
+  d.querySelector('[data-save]').addEventListener('click', () => {
+    const out = build();
+    if (!out.length) { upd(); return; }
+    const subjectId = q('subjectId').value, top = q('pos').value === 'top';
+    d.close();
+    ui.quick.subjectId = subjectId;
+    mutate(s => {
+      const nt = out.map(x => ({ id: uid('t'), subjectId, ...x, status: 'todo', notBefore: null, note: '', completedAt: null }));
+      if (top) s.tasks.unshift(...nt); else s.tasks.push(...nt);
+    }, `${out.length} attività aggiunte in coda`);
+  });
+  q('prefix').focus();
+}
+function openExceptionEditor(p) {
+  const e0 = p.id ? state.exceptions.find(x => x.id === p.id) : null;
+  const v = e0 ? { ...e0 } : { date: p.date || todayStr(), start: p.start ?? 600, end: p.end ?? 660, type: p.type || 'altro', label: p.label ?? '' };
+  const html = `<form class="form" novalidate>
+    <label class="field"><span>Data</span><input name="date" type="date" value="${v.date}"></label>
+    <label class="field"><span>Tipo</span><select name="type">${Object.entries(TYPES).map(([k, T]) => `<option value="${k}" ${k === v.type ? 'selected' : ''}>${T.label}</option>`).join('')}</select></label>
+    <label class="field"><span>Dalle</span>${timeField(v.start, 'name="start"')}</label>
+    <label class="field"><span>Alle</span>${timeField(v.end, 'name="end"')}</label>
+    <label class="field full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="allday"> <span>Tutta la giornata</span></label>
+    <label class="field full"><span>Descrizione</span><input name="label" value="${esc(v.label)}" placeholder="es. Visita medica, esame, turno di lavoro"></label>
+  </form><p class="err" hidden></p>`;
+  const sub = p.fromCalendar ? 'Blocca questa fascia solo per questo giorno: la coda la salta e slitta in avanti.' : p.replaceTpl ? 'Sostituisce il blocco della settimana tipo solo per questa data.' : 'Il tempo occupato non viene usato per lo studio.';
+  const d = modal({ title: e0 ? 'Modifica eccezione' : 'Nuova eccezione', sub, html,
+    foot: `<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-save>${e0 ? 'Salva' : 'Aggiungi'}</button>` });
+  const f = d.querySelector('form'), err = d.querySelector('.err');
+  f.addEventListener('submit', e => e.preventDefault());
+  f.allday.addEventListener('change', () => {
+    if (!f.allday.checked || !isDate(f.date.value)) return;
+    const tpl = state.template[weekday(f.date.value)];
+    f.start.value = fmtHMend(tpl.start); f.end.value = fmtHMend(tpl.end);
+  });
+  d.querySelector('[data-save]').addEventListener('click', () => {
+    const date = f.date.value, start = parseTimeStr(f.start.value), end = parseTimeStr(f.end.value), type = f.type.value, label = f.label.value.trim();
+    if (!isDate(date)) { err.textContent = 'Scegli una data.'; err.hidden = false; return; }
+    if (!Number.isFinite(start) || !Number.isFinite(end)) { err.textContent = 'Orario non valido: scrivi per esempio 9:30, 1330 o 24:00.'; err.hidden = false; return; }
+    if (end <= start) { err.textContent = 'L\'orario di fine deve essere dopo l\'inizio.'; err.hidden = false; return; }
+    d.close();
+    mutate(s => {
+      if (e0) Object.assign(s.exceptions.find(x => x.id === e0.id), { date, start, end, type, label });
+      else s.exceptions.push({ id: uid('e'), date, start, end, type, label });
+      if (p.replaceTpl && !s.cancels.some(c => c.date === p.date && c.blockId === p.replaceTpl)) s.cancels.push({ date: p.date, blockId: p.replaceTpl });
+    }, e0 ? 'Eccezione aggiornata' : `Aggiunta per ${fmtDayShort(date)}`);
+  });
+}
+function openDayOff() {
+  const td = todayStr();
+  const html = `<form class="form" novalidate>
+    <label class="field"><span>Dal</span><input name="from" type="date" value="${td}"></label>
+    <label class="field"><span>Al (compreso)</span><input name="to" type="date" value="${td}"></label>
+    <label class="field full"><span>Descrizione</span><input name="label" value="Giorno libero"></label>
+  </form><p class="err" hidden></p>`;
+  const d = modal({ title: 'Giorni liberi', sub: 'Nessuno studio in questi giorni: la coda riparte dal primo giorno utile dopo.', html,
+    foot: '<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-save>Aggiungi</button>' });
+  const f = d.querySelector('form'), err = d.querySelector('.err');
+  d.querySelector('[data-save]').addEventListener('click', () => {
+    const a = f.from.value, b = f.to.value || a, label = f.label.value.trim() || 'Giorno libero';
+    if (!isDate(a) || !isDate(b) || b < a) { err.textContent = 'Controlla le date.'; err.hidden = false; return; }
+    if (daysBetween(a, b) > 60) { err.textContent = 'Massimo 60 giorni alla volta.'; err.hidden = false; return; }
+    d.close();
+    mutate(s => {
+      for (let ds = a; ds <= b; ds = addDays(ds, 1)) {
+        const tpl = s.template[weekday(ds)];
+        s.exceptions.push({ id: uid('e'), date: ds, start: tpl.start, end: tpl.end, type: 'libero', label });
+      }
+    }, a === b ? `Giorno libero: ${fmtDayShort(a)}` : `Giorni liberi dal ${fmtDayShort(a)} al ${fmtDayShort(b)}`);
+  });
+}
+function openCopyDay(wd) {
+  const html = `<p style="margin:0 0 10px;color:var(--ink-2)">Orario della giornata e blocchi di ${DAY_NAMES[wd]} sostituiscono quelli dei giorni scelti.</p>
+    <div class="daychecks">${DAY_TITLES.map((n, i) => (i === wd ? '' : `<label><input type="checkbox" value="${i}">${n}</label>`)).join('')}</div>`;
+  const d = modal({ title: `Copia ${DAY_NAMES[wd]}`, html, foot: '<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-save>Copia</button>' });
+  d.querySelector('[data-save]').addEventListener('click', () => {
+    const targets = [...d.querySelectorAll('.daychecks input:checked')].map(x => +x.value);
+    d.close();
+    if (!targets.length) return;
+    mutate(s => {
+      const src = s.template[wd];
+      for (const t of targets) s.template[t] = { start: src.start, end: src.end, blocks: src.blocks.map(b => ({ ...b, id: uid('b') })) };
+    }, `Copiato su ${targets.length} ${targets.length === 1 ? 'giorno' : 'giorni'}`);
+  });
+}
+
+// ---------- backup ed esportazioni ----------
+const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+let downloadsApi = null;
+if (inViewer) { try { window.claude.use('downloads').then(x => { downloadsApi = x; }, () => {}); } catch (e) { /* assente */ } }
+function showCopyBox(title, text) {
+  const d = modal({ title, sub: 'Seleziona tutto il testo e copialo: potrai incollarlo in Dati → Incolla un backup, oppure salvarlo in un file .json.', html: `<textarea class="codebox" readonly>${esc(text)}</textarea>`,
+    foot: '<button type="button" class="btn" data-close>Chiudi</button><button type="button" class="btn primary" data-sel>Seleziona tutto</button>' });
+  const ta = d.querySelector('textarea');
+  d.querySelector('[data-sel]').addEventListener('click', () => { ta.focus(); ta.select(); try { document.execCommand('copy'); toast('Copiato', false); } catch (e) { /* manuale */ } });
+}
+async function saveFile(filename, data) {
+  if (downloadsApi) {
+    try { await downloadsApi.save({ filename, data }); return 'saved'; }
+    catch (err) {
+      const c = err && err.code;
+      if (c === 'declined') { toast('Salvataggio annullato', false); return 'declined'; }
+      if (c === 'rate_limited') { toast('C\'è già una richiesta di salvataggio aperta', false); return 'busy'; }
+    }
+  }
+  if (!inViewer && window.matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.share) {
+    try {
+      const type = /\.json$/.test(filename) ? 'application/json' : /\.csv$/.test(filename) ? 'text/csv' : 'application/octet-stream';
+      const file = new File([data], filename, { type });
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return 'saved'; }
+    } catch (e) { if (e && e.name === 'AbortError') { toast('Salvataggio annullato', false); return 'declined'; } }
+  }
+  if (!inViewer) {
+    try {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' }));
+      a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      return 'saved';
+    } catch (e) { /* fallback sotto */ }
+  }
+  showCopyBox(`Copia ${filename}`, data);
+  return 'copy';
+}
+const backupText = () => JSON.stringify(state);
+async function doBackup() {
+  const prev = state.settings.lastBackup;
+  state.settings.lastBackup = Date.now();
+  const r = await saveFile(`master-plan-pacr-${todayStr()}.json`, backupText());
+  if (r !== 'saved') state.settings.lastBackup = prev;
+  save(); render();
+  if (r === 'saved') toast('Backup scaricato', false);
+}
+async function copyBackup() {
+  const prev = state.settings.lastBackup;
+  state.settings.lastBackup = Date.now();
+  const text = backupText();
+  try { await navigator.clipboard.writeText(text); save(); render(); toast('Backup copiato negli appunti', false); }
+  catch (e) { state.settings.lastBackup = prev; showCopyBox('Copia il backup', text); }
+}
+function importText(txt) {
+  let ns;
+  try { ns = sanitize(JSON.parse(txt)); } catch (e) { toast(`Backup non valido: ${e instanceof SyntaxError ? 'il testo non è JSON' : e.message}`, false); return; }
+  const apply = () => mutate(s => {
+    const lb = Math.max(+s.settings.lastBackup || 0, +ns.settings.lastBackup || 0) || undefined;
+    for (const k of Object.keys(s)) delete s[k];
+    Object.assign(s, ns); s.settings.lastBackup = lb; s.settings.introSeen = true;
+    if (s.cursor == null) s.cursor = ceilQuarter(floorMin(Date.now()));
+  }, `Importate ${ns.subjects.length} materie e ${ns.tasks.length} attività`);
+  if (!state.subjects.length && !state.tasks.length) { apply(); return; }
+  confirmDialog({ title: 'Sostituire i dati attuali?', ok: 'Importa',
+    body: `Il backup contiene ${ns.subjects.length} materie e ${ns.tasks.length} attività. I dati attuali vengono sostituiti; subito dopo puoi ancora annullare.`,
+    fn: apply });
+}
+function openPaste() {
+  const d = modal({ title: 'Incolla un backup', html: '<textarea class="codebox" placeholder="Incolla qui il testo del backup (inizia con {&quot;v&quot;:1 …)"></textarea>',
+    foot: '<button type="button" class="btn" data-close>Annulla</button><button type="button" class="btn primary" data-ok>Continua</button>' });
+  const ta = d.querySelector('textarea');
+  ta.focus();
+  d.querySelector('[data-ok]').addEventListener('click', () => { const v = ta.value.trim(); d.close(); if (v) importText(v); });
+}
+const csvCell = v => { v = String(v ?? ''); return /[;"\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+const toCSV = rows => '\uFEFF' + rows.map(r => r.map(csvCell).join(';')).join('\r\n');
+async function exportPlanCSV() {
+  const M = buildModel();
+  const stl = { future: 'In programma', running: 'In corso', pending: 'Da confermare', done: 'Svolto', skipped: 'Non svolto' };
+  const rows = [['Data', 'Giorno', 'Inizio', 'Fine', 'Minuti', 'Materia', 'Attività', 'Contenuto', 'Stato']];
+  for (const it of M.items) rows.push([itDate(it.date), DAY_NAMES[weekday(it.date)], fmtTime(it.start), fmtEnd(it.end, it.date), Math.round((it.end - it.start) / MIN), it.subject ? it.subject.name : '', it.activity, it.content, stl[it.status]]);
+  if ((await saveFile(`calendario-pacr-${todayStr()}.csv`, toCSV(rows))) === 'saved') toast('CSV del calendario salvato', false);
+}
+async function exportQueueCSV() {
+  const M = buildModel();
+  const rows = [['Ordine', 'Materia', 'Attività', 'Contenuto', 'Durata (min)', 'Già trascorsi (min)', 'Residui (min)', 'Stato', 'Quando', 'Non prima del', 'Note']];
+  let n = 0;
+  const order = [...state.tasks.filter(t => t.status === 'todo'), ...state.tasks.filter(t => t.status !== 'todo')];
+  for (const t of order) {
+    const s = M.subjById.get(t.subjectId), ti = M.tinfo.get(t.id);
+    rows.push([t.status === 'todo' ? ++n : '', s ? s.name : '', t.activity, t.content, t.duration, Math.round(ti.used), ti.rem, taskState(t, M).label, t.status === 'todo' ? whenText(t, M) : '', t.notBefore ? itDate(t.notBefore) : '', t.note]);
+  }
+  if ((await saveFile(`coda-pacr-${todayStr()}.csv`, toCSV(rows))) === 'saved') toast('CSV della coda salvato', false);
+}
+
+// ---------- avvisi ----------
+let toastTimer = null;
+function toast(msg, withUndo) {
+  const el = $('#toast');
+  el.innerHTML = `<span>${esc(msg)}</span>${withUndo && undoStack.length ? '<button type="button" class="btn sm" data-act="undo">Annulla</button>' : ''}`;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), withUndo ? 6000 : 3500);
+}
+
+// ---------- trascinamento nella coda ----------
+function startDrag(e, grip) {
+  const list = grip.closest('.queue'), row = grip.closest('.q-row');
+  if (!list || !row) return;
+  e.preventDefault();
+  const rows = [...list.children], from = rows.indexOf(row), sy0 = window.scrollY;
+  const rects = rows.map(r => { const b = r.getBoundingClientRect(); return { top: b.top + sy0, h: b.height }; });
+  const gap = rects.length > 1 ? rects[1].top - (rects[0].top + rects[0].h) : 6;
+  const step = rects[from].h + gap, startDocY = e.clientY + sy0;
+  let to = from, lastY = e.clientY, raf = 0;
+  dragging = true;
+  row.classList.add('dragging'); list.classList.add('is-dragging');
+  try { grip.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
+  const update = () => {
+    const dy = lastY + window.scrollY - startDocY;
+    row.style.transform = `translateY(${dy}px)`;
+    const cy = rects[from].top + rects[from].h / 2 + dy;
+    let n = 0;
+    rects.forEach((r, i) => { if (i !== from && cy > r.top + r.h / 2) n++; });
+    to = n;
+    rows.forEach((r, i) => {
+      if (i === from) return;
+      let sh = 0;
+      if (from < to && i > from && i <= to) sh = -step;
+      if (from > to && i >= to && i < from) sh = step;
+      r.style.transform = sh ? `translateY(${sh}px)` : '';
+    });
+  };
+  const edge = () => { // scorrimento automatico vicino ai bordi
+    raf = 0;
+    if (!dragging) return;
+    const topEdge = ($('.topbar') ? $('.topbar').getBoundingClientRect().bottom : 0) + 60, botEdge = window.innerHeight - 60;
+    const v = lastY < topEdge ? -Math.ceil((topEdge - lastY) / 5) : lastY > botEdge ? Math.ceil((lastY - botEdge) / 5) : 0;
+    if (!v) return;
+    const before = window.scrollY;
+    window.scrollBy(0, v);
+    if (window.scrollY !== before) { update(); raf = requestAnimationFrame(edge); }
+  };
+  const move = ev => { lastY = ev.clientY; update(); if (!raf) raf = requestAnimationFrame(edge); };
+  const up = () => {
+    grip.removeEventListener('pointermove', move); grip.removeEventListener('pointerup', up); grip.removeEventListener('pointercancel', up);
+    if (raf) cancelAnimationFrame(raf);
+    rows.forEach(r => { r.style.transform = ''; });
+    row.classList.remove('dragging'); list.classList.remove('is-dragging');
+    dragging = false;
+    if (to === from) return;
+    const old = rows.map(r => r.dataset.id), ids = [...old];
+    ids.splice(from, 1); ids.splice(to, 0, old[from]);
+    applyOrder(old, ids, 'Ordine aggiornato');
+  };
+  grip.addEventListener('pointermove', move); grip.addEventListener('pointerup', up); grip.addEventListener('pointercancel', up);
+}
+
+// ---------- azioni ----------
+const ACT = {
+  tab: a => { ui.tab = a.dataset.tab; render(); window.scrollTo(0, 0); },
+  undo: () => undo(),
+  'intro-ok': () => { state.settings.introSeen = true; save(); render(); },
+  'start-empty': () => { ui.tab = 'coda'; render(); window.scrollTo(0, 0); },
+  install: async () => { const ev = installEvt; if (!ev) return; installEvt = null; try { await ev.prompt(); await ev.userChoice; } catch (e) { /* chiuso */ } render(); },
+  'install-later': () => { try { localStorage.setItem('pacr-install-later', String(Date.now())); } catch (e) { /* ok */ } render(); },
+  'week-prev': () => { ui.week = addDays(ui.week, -7); ui.day = addDays(ui.day, -7); render(); },
+  'week-next': () => { ui.week = addDays(ui.week, 7); ui.day = addDays(ui.day, 7); render(); },
+  today: () => { ui.week = mondayOf(todayStr()); ui.day = todayStr(); render(); },
+  zoom: a => { state.settings.zoom = +a.dataset.z; save(); render(); },
+  'pick-day': a => { ui.day = a.dataset.date; render(); },
+  'open-item': a => openItemSheet(a.dataset.task, a.dataset.start),
+  'item-done': a => { const it = itemFromEl(a); if (it) setItemsStatus([it], 'done'); },
+  'item-skip': a => { const it = itemFromEl(a); if (it) setItemsStatus([it], 'skipped'); },
+  'bulk-done': () => { const td = todayStr(); setItemsStatus(buildModel().items.filter(i => i.status === 'pending' && i.date < td), 'done'); },
+  'bulk-skip': () => { const td = todayStr(); setItemsStatus(buildModel().items.filter(i => i.status === 'pending' && i.date < td), 'skipped'); },
+  'task-complete': a => completeTask(a.dataset.task),
+  'task-edit': a => openTaskEditor(a.dataset.task),
+  'task-new': () => openTaskEditor(null),
+  'task-up': a => moveTask(a.dataset.task, 'up'),
+  'task-down': a => moveTask(a.dataset.task, 'down'),
+  'task-reopen': a => mutate(s => { const t = s.tasks.find(x => x.id === a.dataset.task); if (t) { t.status = 'todo'; t.completedAt = null; } }, 'Attività riaperta'),
+  'task-del': a => mutate(s => { s.tasks = s.tasks.filter(x => x.id !== a.dataset.task); s.frozen = s.frozen.filter(f => f.taskId !== a.dataset.task); }, 'Attività eliminata'),
+  batch: () => openBatch(),
+  'toggle-history': () => { ui.showHistory = !ui.showHistory; render(); },
+  'subj-new': () => openSubjectEditor(null),
+  'subj-edit': a => openSubjectEditor(a.dataset.id),
+  'blk-add': a => addTplBlock(+a.dataset.wd),
+  'blk-del': a => { const li = a.closest('li'); mutate(s => { const d = s.template[+li.dataset.wd]; d.blocks = d.blocks.filter(b => b.id !== li.dataset.id); }, 'Blocco eliminato'); },
+  'day-copy': a => openCopyDay(+a.dataset.wd),
+  'exc-new': () => openExceptionEditor({ date: todayStr(), start: 600, end: 660, type: 'altro' }),
+  'exc-edit': a => openExceptionEditor({ id: a.dataset.id }),
+  'exc-del': a => mutate(s => { s.exceptions = s.exceptions.filter(e => e.id !== a.dataset.id); }, 'Eccezione eliminata'),
+  'dayoff-new': () => openDayOff(),
+  'cancel-restore': a => mutate(s => { s.cancels = s.cancels.filter(c => !(c.date === a.dataset.date && c.blockId === a.dataset.id)); }, 'Impegno ripristinato'),
+  'backup-save': () => doBackup(),
+  'backup-copy': () => copyBackup(),
+  'backup-paste': () => openPaste(),
+  'csv-plan': () => exportPlanCSV(),
+  'csv-queue': () => exportQueueCSV(),
+  'reset-empty': () => confirmDialog({ title: 'Svuotare coda e storico?', ok: 'Svuota', danger: true, body: 'Restano materie e settimana tipo; spariscono attività, blocchi passati ed eccezioni. Subito dopo puoi ancora annullare.',
+    fn: () => mutate(s => { s.tasks = []; s.frozen = []; s.exceptions = []; s.cancels = []; s.cursor = ceilQuarter(floorMin(Date.now())); }, 'Coda e storico svuotati') }),
+};
+
+function bindEvents() {
+  document.addEventListener('click', e => {
+    if (e.target.closest('dialog')) return;
+    const a = e.target.closest('[data-act]');
+    if (a) { const fn = ACT[a.dataset.act]; if (fn) { e.preventDefault(); fn(a, e); } return; }
+    const itm = e.target.closest('.itm');
+    if (itm) { openItemSheet(itm.dataset.task, itm.dataset.start); return; }
+    const blk = e.target.closest('.blk');
+    if (blk) { openBlockSheet(blk.dataset.date, blk.dataset.blk, blk.dataset.id); return; }
+    const col = e.target.closest('.cal-col');
+    if (col) freeClick(col, e);
+  });
+  document.addEventListener('pointerdown', e => {
+    const g = e.target.closest('[data-drag]');
+    if (g && e.button === 0) startDrag(e, g);
+  });
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (el.closest('dialog')) return;
+    if (el.closest('#view-impegni')) { onTplChange(el); return; }
+    const c = el.dataset.change;
+    if (c === 'filter') { ui.filter = el.value; render(); }
+    else if (c === 'minchunk') mutate(s => { s.settings.minChunk = +el.value; }, `Blocco minimo: ${el.value} minuti`);
+    else if (c === 'theme') { state.settings.theme = el.value; save(); render(); }
+    else if (c === 'import-file') {
+      const file = el.files && el.files[0];
+      el.value = '';
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = () => importText(String(r.result));
+      r.onerror = () => toast('Non riesco a leggere il file', false);
+      r.readAsText(file);
+    } else if (el.closest('#quick') && el.name === 'subjectId') ui.quick.subjectId = el.value;
+  });
+  document.addEventListener('submit', e => {
+    if (e.target.id !== 'quick') return;
+    e.preventDefault();
+    const f = e.target, activity = f.activity.value.trim(), content = f.content.value.trim(), duration = Math.round(+f.duration.value), subjectId = f.subjectId.value;
+    if (!activity) { toast('Indica l\'attività, per esempio Lettura', false); f.activity.focus(); return; }
+    if (!(duration >= 5)) { toast('La durata deve essere di almeno 5 minuti', false); f.duration.focus(); return; }
+    ui.quick = { subjectId, activity, duration };
+    ui.focusQuick = true;
+    mutate(s => { s.tasks.push({ id: uid('t'), subjectId, activity, content, duration, status: 'todo', notBefore: null, note: '', completedAt: null }); }, 'Aggiunta in coda');
+  });
+  document.addEventListener('keydown', e => {
+    const inField = e.target.matches && e.target.matches('input, textarea, select');
+    const dlg = document.querySelector('dialog[open]');
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !inField && !dlg) { e.preventDefault(); undo(); return; }
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.itm, .blk')) { e.preventDefault(); e.target.click(); return; }
+    if (e.target.matches && e.target.matches('.q-grip')) {
+      const dir = { ArrowUp: 'up', ArrowDown: 'down', Home: 'top', End: 'bottom' }[e.key];
+      if (dir) { e.preventDefault(); const id = e.target.closest('.q-row').dataset.id; ui.refocusGrip = id; moveTask(id, dir); }
+      return;
+    }
+    if (ui.tab === 'piano' && !inField && !dlg && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.key === 'ArrowLeft') ACT['week-prev']();
+      else if (e.key === 'ArrowRight') ACT['week-next']();
+      else if (e.key === 't' || e.key === 'T') ACT.today();
+    }
+  });
+  window.addEventListener('storage', e => {
+    if (e.key !== LS_KEY || !e.newValue) return;
+    try { state = sanitize(JSON.parse(e.newValue)); render(); } catch (err) { /* ignora */ }
+  });
+  const mq = window.matchMedia('(max-width: 760px)');
+  if (mq.addEventListener) mq.addEventListener('change', () => render());
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+}
+function tick() {
+  const before = state.cursor;
+  freeze(state, Date.now());
+  if (state.cursor !== before) save();
+  if (dragging || document.querySelector('dialog[open]')) return;
+  const ae = document.activeElement;
+  if (ae && ae.matches && ae.matches('input, select, textarea')) { renderTopbar(buildModel()); return; }
+  render();
+}
+function init() {
+  $('#undo').innerHTML = ICON.undo;
+  $('#acts').innerHTML = ACTIVITIES.map(a => `<option value="${esc(a)}"></option>`).join('');
+  load();
+  bindEvents();
+  render();
+  const tb = $('.topbar');
+  const setH = () => document.documentElement.style.setProperty('--topbar-h', `${tb.offsetHeight}px`);
+  setH();
+  if (window.ResizeObserver) new ResizeObserver(setH).observe(tb);
+  setInterval(tick, 30000);
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (ui.tab === 'piano' && !document.querySelector('dialog[open]')) render(); });
+  window.addEventListener('appinstalled', () => { installEvt = null; render(); toast('App installata: la trovi tra le app del telefono', false); });
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+init();
+
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // Master plan PACR — service worker: works offline, updates the page when online.
-const VERSION = 'pacr-v2';
+const VERSION = 'pacr-v3';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest',
   'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'favicon-32.png',
